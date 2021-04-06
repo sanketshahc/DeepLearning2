@@ -341,10 +341,10 @@ targets = annot_table.loc[:, ['file', 'class id']]
 # classes.groupby('class id').agg(lambda x: set(x).pop()).to_dict()['file']
 ###
 
-sample_pairs_training = datasets.folder.ImageFolder(trainingd_root, transform_pets)
-sample_pairs_testing = datasets.folder.ImageFolder(testingd_root, transform_pets)
-training_loader = DataLoader(sample_pairs_training)
-testing_loader = DataLoader(sample_pairs_testing)
+# sample_pairs_training = datasets.folder.ImageFolder(trainingd_root, transform_pets)
+# sample_pairs_testing = datasets.folder.ImageFolder(testingd_root, transform_pets)
+# training_loader = DataLoader(sample_pairs_training)
+# testing_loader = DataLoader(sample_pairs_testing)
 
 
 # no target transform needed here, because sanket-net already has it embedded
