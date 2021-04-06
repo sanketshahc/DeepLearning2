@@ -666,13 +666,12 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if batch_count % 10 == 0:
+        if batch_count % 250 == 0:
             print(batch_count,' batches complete')
     return loss_total, y_hat, y
 
 def problem3_1():
-    # print(CHP)
-    # return
+    print(CHP)
     cifar_Loader = DataLoader(cifar, batch_size=CHP['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test, batch_size=CHP['BATCH'])
     network = TorchNet()
