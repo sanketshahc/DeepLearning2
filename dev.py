@@ -16,6 +16,8 @@ import json
 import PIL.Image as pil
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from argparse import ArgumentParser, Action
+
 
 Lambda = transforms.Lambda
 
@@ -518,8 +520,8 @@ def sanket_net(regularization_level):
 # choices. What is your final accuracy? Note: Your model should perform better than the one in
 # Part 1 and Part 2. Solution:
 CHP = {
-    "EPOCHS": 1,
-    "BATCH": 256,  # 32, 16, 64
+    "EPOCHS": 5,
+    "BATCH": 1,  # 32, 16, 64
     "RATE": .01,  # .1 .05 .01 .05, .02 .025
     "MOMENTUM": .2,
     "RC": .005  # .01 .005
@@ -640,15 +642,23 @@ class TorchNet(nn.Module):
 def batches_loop(loader, model, criterion, optimizer, is_val=False):
     batch_count = 0
     loss_total = 0
+    model.train()
+    # for x in loader:
+    #     y = torch.ones(1, dtype=int)
+    #     x = x['image']
     for x, y in loader:
         batch_count+=1
         assert x.shape[0] == CHP["BATCH"], x.shape
         if is_val:
             model.eval()
-            model.no_grad()
-        y_hat = model(x)
-        loss = criterion(y_hat, y)
-        loss_total += loss
+            with torch.no_grad():
+                y_hat = model(x)
+                loss = criterion(y_hat, y)
+                loss_total += loss.item()
+        else:
+            y_hat = model(x)
+            loss = criterion(y_hat, y)
+            loss_total += loss.item()
         if not is_val:
             optimizer.zero_grad()
             loss.backward()
@@ -658,6 +668,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     return loss_total, y_hat, y
 
 def problem3_1():
+    # print(CHP)
+    # return
     cifar_Loader = DataLoader(cifar, batch_size=CHP['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test, batch_size=CHP['BATCH'])
     network = TorchNet()
@@ -696,7 +708,7 @@ def problem3_1():
     metrics = (loss_training,loss_testing,accuracy,accuracy_test)
     save_bin('torchnet',network)
     return network,metrics
-
+## todo save dict
 ## visualizing features (tile, view, easy method)
 
 
@@ -705,3 +717,39 @@ def problem3_1():
 # gpu condition checking...
 # optimizer / parameter search...
 # cli customizing (will need if using colab)
+
+##########
+### CLI code
+########
+parser = ArgumentParser()
+class Run(Action):
+    def __init__(self, **kwargs):
+        super(Run, self).__init__( **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        return problem3_1()
+
+parser.add_argument("--N", type=int, default=100, help="number of epochs")
+# parser.add_argument("--HIDDEN", type=int, default=10, help="number of hiddens")
+parser.add_argument(
+    "--RATE",
+    type=float,
+    default= .01,
+    help="learning rate")
+parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
+parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
+parser.add_argument("--RC", default=0, help="regularizer")
+parser.add_argument("--MOMENTUM", default=0, help="Momentum")
+parser.add_argument("--RUN", action=Run, help="Run")
+args = parser.parse_args()
+
+CHP['EPOCHS'] = args.N
+CHP['MOMENTUM'] = args.MOMENTUM
+CHP['DEVICE'] = args.DEVICE
+CHP['BATCH'] = args.BATCH
+CHP['RATE'] = args.RATE
+CHP['RC'] = args.RC
+
+## name/main is for a functioncall that only should be called when module is main mofule running,
+# otherwise would run every time imported.
+
+
