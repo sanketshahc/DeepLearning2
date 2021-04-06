@@ -725,14 +725,17 @@ def problem3_1():
 ### CLI code
 ########
 parser = ArgumentParser()
-class Run(Action):
-    def __init__(self, **kwargs):
-        super(Run, self).__init__( **kwargs)
-    def __call__(self, parser, namespace, values, option_string=None):
-        return problem3_1()
+
+# def prob3_runner():
+#     return update_hypes()
+#
+# class Run(Action):
+#     def __init__(self, **kwargs):
+#         super(Run, self).__init__( **kwargs)
+#     def __call__(self, parser, namespace, values, option_string=None):
+#         return prob3_runner()
 
 parser.add_argument("--N", type=int, default=100, help="number of epochs")
-# parser.add_argument("--HIDDEN", type=int, default=10, help="number of hiddens")
 parser.add_argument(
     "--RATE",
     type=float,
@@ -742,17 +745,23 @@ parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
 parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
 parser.add_argument("--RC", default=0, help="regularizer")
 parser.add_argument("--MOMENTUM", default=0, help="Momentum")
-parser.add_argument("--RUN", action=Run, help="Run")
-args = parser.parse_args()
+args = parser.parse_known_args()[0]
+# parser.add_argument("--RUN", action=Run, help="Run")
 
-CHP['EPOCHS'] = args.N
-CHP['MOMENTUM'] = args.MOMENTUM
-CHP['DEVICE'] = args.DEVICE
-CHP['BATCH'] = args.BATCH
-CHP['RATE'] = args.RATE
-CHP['RC'] = args.RC
-
+def problem3_command():
+    global CHP
+    CHP['EPOCHS'] = args.N
+    CHP['MOMENTUM'] = args.MOMENTUM
+    CHP['DEVICE'] = args.DEVICE
+    CHP['BATCH'] = args.BATCH
+    CHP['RATE'] = args.RATE
+    CHP['RC'] = args.RC
+    return problem3_1()
+# print(CHP)
 ## name/main is for a functioncall that only should be called when module is main mofule running,
 # otherwise would run every time imported.
 
-
+FUNCTION_MAP = {'problem3_1' : problem3_command()}
+parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
+args = parser.parse_args()
+FUNCTION_MAP[args.RUN]()
