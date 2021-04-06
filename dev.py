@@ -526,6 +526,7 @@ CHP = {
     "MOMENTUM": .2,
     "RC": .005  # .01 .005
 }
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 # calculate mean and stf of CIFAR....use sanketnet importer...use np for mean calc
@@ -647,6 +648,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
     for x, y in loader:
+        x.to(device)
+        y.to(device)
         batch_count+=1
         assert x.shape[0] == CHP["BATCH"], x.shape
         if is_val:
@@ -673,6 +676,7 @@ def problem3_1():
     cifar_Loader = DataLoader(cifar, batch_size=CHP['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test, batch_size=CHP['BATCH'])
     network = TorchNet()
+    network.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(network.parameters(), lr=CHP["RATE"], momentum=CHP["MOMENTUM"])
     count_correct_training = 0
