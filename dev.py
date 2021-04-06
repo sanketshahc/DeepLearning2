@@ -705,8 +705,8 @@ def problem3_1():
         loss_testing.append(testing_batch[0])
         accuracy = count_correct_training / len(cifar)
         accuracy_test = count_correct_testing / len(cifar_test)
-        print('training_loss', loss_training, 'accuracy', accuracy)
-        print('testing_loss', loss_testing, 'accuracy_test', accuracy_test)
+        print('training_loss', training_batch[0], 'accuracy', accuracy)
+        print('testing_loss', testing_batch[0], 'accuracy_test', accuracy_test)
 
     metrics = (loss_training,loss_testing,accuracy,accuracy_test)
     torch.save(network, './pickled_binaries/torchnet.pt',)
