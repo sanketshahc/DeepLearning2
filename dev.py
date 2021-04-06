@@ -678,36 +678,38 @@ def problem3_1():
     network.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(network.parameters(), lr=CHP["RATE"], momentum=CHP["MOMENTUM"])
-    count_correct_training = 0
-    count_correct_testing = 0
     count_epoch = 0
     accuracy = 0
     accuracy_test = 0
     loss_testing = []
     loss_training = []
     for epoch in range(CHP["EPOCHS"]):
+        count_correct_training = 0
+        count_correct_testing = 0
         count_epoch+=1
         print('EPOCH:', count_epoch)
         # training
         network.train()
-        training_batch = batches_loop(cifar_Loader, network,criterion,optimizer)
-        y_arg = training_batch[2]
-        y_hat_arg = training_batch[1].argmax(dim=-1)
+        training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
+        y_arg = training_batches[2]
+        y_hat_arg = training_batches[1].argmax(dim=-1)
         count_correct_training += (y_arg == y_hat_arg).sum()
-        loss_training.append(training_batch[0])
+        loss_training.append(training_batches[0])
 
         # testing
         network.eval()
-        testing_batch = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
-        yt_arg = testing_batch[2]
-        yt_hat_arg = testing_batch[1].argmax(dim=-1)
+        testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
+        yt_arg = testing_batches[2]
+        yt_hat_arg = testing_batches[1].argmax(dim=-1)
         count_correct_testing += (yt_arg == yt_hat_arg).sum()
-        loss_testing.append(testing_batch[0])
-        accuracy = count_correct_training / len(cifar)
-        accuracy_test = count_correct_testing / len(cifar_test)
-        print('training_loss', training_batch[0], 'accuracy', accuracy)
-        print('testing_loss', testing_batch[0], 'accuracy_test', accuracy_test)
+        loss_testing.append(testing_batches[0])
+        accuracy = (count_correct_training / len(cifar)).item()
+        accuracy_test = (count_correct_testing / len(cifar_test)).item()
 
+        print('training_loss', training_batches[0], 'accuracy', accuracy)
+        print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
+        print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
+        print('out of', len(cifar), len(cifar_test))
     metrics = (loss_training,loss_testing,accuracy,accuracy_test)
     torch.save(network, './pickled_binaries/torchnet.pt',)
     save_bin('torchnet_metrics', metrics)
