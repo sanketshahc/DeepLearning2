@@ -649,8 +649,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
     for x, y in loader:
-        x.to(device)
-        y.to(device)
+        x.cuda()
+        y.cuda()
         batch_count+=1
         assert x.shape[0] == CHP["BATCH"], x.shape
         if is_val:
