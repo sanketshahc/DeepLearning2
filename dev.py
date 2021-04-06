@@ -612,6 +612,7 @@ class TorchNet(nn.Module):
 
     # q are we to average pool to 1 pixel?
     def forward(self, x):
+        x.to(device)
         x = self.conv1(x)
         print('conv1 complete')
         assert x.shape == (CHP["BATCH"], 64, 224, 224), x.shape
