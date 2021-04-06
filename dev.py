@@ -613,29 +613,29 @@ class TorchNet(nn.Module):
     # q are we to average pool to 1 pixel?
     def forward(self, x):
         x = self.conv1(x)
-        print('conv1 complete')
+        # print('conv1 complete')
         assert x.shape == (CHP["BATCH"], 64, 224, 224), x.shape
         x = Mish()(x)
         x = self.max_pool(x)
         assert x.shape == (CHP["BATCH"], 64, 112, 112), x.shape
-        print('Maxpool complete')
+        # print('Maxpool complete')
         x = self.conv2(x)
         assert x.shape == (CHP["BATCH"], 128, 112, 112), x.shape
-        print('conv2 complete')
+        # print('conv2 complete')
         x = Mish()(x)
         x = self.conv3(x)
         assert x.shape == (CHP["BATCH"], 128, 112, 112), x.shape
-        print('conv3 complete')
+        # print('conv3 complete')
         x = Mish()(x)
         x = self.avg_pool(x)
         assert x.shape == (CHP["BATCH"], 128, 14, 14), x.shape
-        print('avgpool complete')
+        # print('avgpool complete')
         x = x.view(CHP["BATCH"], 25088)
         x = self.lin1(x)
-        print('lin1 complete')
+        # print('lin1 complete')
         x = nn.ReLU()(x)
         x = self.lin2(x)
-        print('lin2 complete')
+        # print('lin2 complete')
         y = self.out(x)
         return y
 
@@ -710,11 +710,11 @@ def problem3_1():
         print('testing_loss', loss_testing, 'accuracy_test', accuracy_test)
 
     metrics = (loss_training,loss_testing,accuracy,accuracy_test)
-    save_bin('torchnet',network)
+    torch.save(network, './pickled_binaries/torchnet.pt',)
+    save_bin('torchnet_metrics', metrics)
     return network,metrics
 ## todo save dict
 ## visualizing features (tile, view, easy method)
-
 
 ## Eventually
 # batch Norm layers
