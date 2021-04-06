@@ -612,7 +612,6 @@ class TorchNet(nn.Module):
 
     # q are we to average pool to 1 pixel?
     def forward(self, x):
-        x.to(device)
         x = self.conv1(x)
         print('conv1 complete')
         assert x.shape == (CHP["BATCH"], 64, 224, 224), x.shape
@@ -649,8 +648,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
     for x, y in loader:
-        x.cuda()
-        y.cuda()
+        x = x.to(device)
+        y = y.to(device)
         batch_count+=1
         assert x.shape[0] == CHP["BATCH"], x.shape
         if is_val:
