@@ -651,7 +651,7 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
         x = x.to(device)
         y = y.to(device)
         batch_count+=1
-        assert x.shape[0] == CHP["BATCH"], x.shape
+        # assert x.shape[0] == CHP["BATCH"], x.shape
         if is_val:
             model.eval()
             with torch.no_grad():
@@ -735,7 +735,7 @@ parser = ArgumentParser()
 #     def __call__(self, parser, namespace, values, option_string=None):
 #         return prob3_runner()
 
-parser.add_argument("--N", type=int, default=100, help="number of epochs")
+parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
 parser.add_argument(
     "--RATE",
     type=float,
