@@ -744,7 +744,7 @@ parser.add_argument(
 parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
 parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
 parser.add_argument("--RC", default=0, help="regularizer")
-parser.add_argument("--MOMENTUM", default=0, help="Momentum")
+parser.add_argument("--MOMENTUM", default=0,type=int, help="Momentum")
 args = parser.parse_known_args()[0]
 # parser.add_argument("--RUN", action=Run, help="Run")
 
