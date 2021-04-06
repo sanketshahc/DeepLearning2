@@ -672,8 +672,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
 
 def problem3_1():
     print(CHP)
-    cifar_Loader = DataLoader(cifar, batch_size=CHP['BATCH'])
-    cifar_test_Loader = DataLoader(cifar_test, batch_size=CHP['BATCH'])
+    cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=CHP['BATCH'])
+    cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=CHP['BATCH'])
     network = TorchNet()
     network.to(device)
     criterion = nn.CrossEntropyLoss()
