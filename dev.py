@@ -750,7 +750,7 @@ args = parser.parse_known_args()[0]
 
 def problem3_command():
     global CHP
-    CHP['EPOCHS'] = args.N
+    CHP['EPOCHS'] = args.EPOCHS
     CHP['MOMENTUM'] = args.MOMENTUM
     CHP['DEVICE'] = args.DEVICE
     CHP['BATCH'] = args.BATCH
