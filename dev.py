@@ -711,69 +711,71 @@ def problem3_1():
     loss_training = []
     # for epoch in range(2):  # loop over the dataset multiple times
 
-    #     running_loss = 0.0
-    #     for i, data in enumerate(cifar_Loader, 0):
-    #         # get the inputs; data is a list of [inputs, labels]
-    #         inputs, labels = data
+    running_loss = 0.0
+    for i, data in enumerate(cifar_Loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
 
-    #         # zero the parameter gradients
-    #         optimizer.zero_grad()
+        # zero the parameter gradients
+        optimizer.zero_grad()
 
-    #         # forward + backward + optimize
-    #         outputs = network(inputs)
-    #         loss = criterion(outputs, labels)
-    #         loss.backward()
-    #         optimizer.step()
+        # forward + backward + optimize
+        outputs = network(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
 
-    #         # print statistics
-    #         running_loss += loss.item()
-    #         if i % 250 == 0:    # print every 2000 mini-batches
-    #             print('[%d, %5d] loss: %.3f' %
-    #                 (epoch + 1, i + 1, running_loss))
-    #             # running_loss = 0.0
-            
-        # correct = 0
-        # total = 0
-        # with torch.no_grad():
-        #     for data in cifar_test_Loader:
-        #         images, labels = data
-        #         outputs = network(images)
-        #         _, predicted = torch.max(outputs.data, -1)
-        #         total += labels.size(0)
-        #         correct += (predicted == labels).sum().item()
-        #     print(correct, total)
-
-        #     print('Accuracy of the network on the 10000 test images: %d %%' % (
-        #         100 * correct / total))
-    
-    for epoch in range(hypes["EPOCHS"]):
-        count_correct_training = 0
-        count_correct_testing = 0
-        count_epoch+=1
-        print('EPOCH:', count_epoch)
-        # training
-        # network.train()
-        training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
-        y_arg = training_batches[2]
-        # y_hat_arg = training_batches[1].argmax(dim=-1)
-        # count_correct_training += (y_arg == y_hat_arg).sum()
-        loss_training.append(training_batches[0])
-        _, predicted = torch.max(training_batches[1].data, -1)
-        # print(predicted)
-        # total += labels.size(0)
-        count_correct_training += (predicted == y_arg).sum().item()
-    #     # testing
-    #     network.eval()
-    #     testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
-    #     yt_arg = testing_batches[2]
-    #     yt_hat_arg = testing_batches[1].argmax(dim=-1)
-    #     count_correct_testing += (yt_arg == yt_hat_arg).sum()
-    #     loss_testing.append(testing_batches[0])
-        accuracy = (count_correct_training / training_batches[3])
-    #     accuracy_test = (count_correct_testing / len(cifar_test)).item()
-        print('training_loss', training_batches[0], 'cprrect', count_correct_training,'accuracy', accuracy)
+        # print statistics
+        running_loss += loss.item()
+        if i % 250 == 0:    # print every 2000 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                (epoch + 1, i + 1, running_loss))
+            # running_loss = 0.0
         
-    #     print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
+        correct = 0
+        total = 0
+    # with torch.no_grad():
+    #     for data in cifar_test_Loader:
+        
+        # outputs = network(images)
+        _, predicted = torch.max(outputs.data, -1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        print(correct, total)
+
+        print('Accuracy of the network on the 10000 test images: %d %%' % (
+            100 * correct / total))
+
+# for epoch in range(hypes["EPOCHS"]):
+    count_correct_training = 0
+    count_correct_testing = 0
+    count_epoch+=1
+    print('EPOCH:', count_epoch)
+    # training
+    # network.train()
+    training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
+    y_arg = training_batches[2]
+    # y_hat_arg = training_batches[1].argmax(dim=-1)
+    # count_correct_training += (y_arg == y_hat_arg).sum()
+    loss_training.append(training_batches[0])
+    # _, predicted = torch.max(out.data, -1)
+    assert training_batches[1] == outputs
+    assert predicted == 
+    # print(predicted)
+    # total += labels.size(0)
+    count_correct_training += (predicted == y_arg).sum().item()
+#     # testing
+#     network.eval()
+#     testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
+#     yt_arg = testing_batches[2]
+#     yt_hat_arg = testing_batches[1].argmax(dim=-1)
+#     count_correct_testing += (yt_arg == yt_hat_arg).sum()
+#     loss_testing.append(testing_batches[0])
+    accuracy = (count_correct_training / training_batches[3])
+#     accuracy_test = (count_correct_testing / len(cifar_test)).item()
+    print('training_loss', training_batches[0], 'cprrect', count_correct_training,'accuracy', accuracy)
+    
+#     print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
     #     print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
     #     print('out of', len(cifar), len(cifar_test))
     # metrics = (loss_training,loss_testing,accuracy,accuracy_test)
