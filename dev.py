@@ -673,8 +673,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     x = x['image']
     for x, y in loader:
         # model.train()
-        x = x.to(device)
-        y = y.to(device)
+        # x = x.to(device)
+        # y = y.to(device)
         batch_count+=1
         # assert x.shape[0] == hypes["BATCH"], x.shape
         if is_val:
@@ -700,7 +700,7 @@ def problem3_1():
     cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
     network = TorchNet()
-    network.to(device)
+    # network.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
     count_epoch = 0
