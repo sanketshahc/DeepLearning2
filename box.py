@@ -7,22 +7,26 @@ import os
 # from boxsdk.exception import BoxAPIException
 # from boxsdk.network.logging_network import LoggingNetwork
 # from boxsdk.object.collaboration import CollaborationRole
-#client = DevelopmentClient()
-config = JWTAuth.from_settings_file('config.json')
-# auth = OAuth2(
-#     client_id='qgbl5vbwefkfx8h0rfudledazlkpp2c0',
-#     client_secret='cEcc6w1PIOchMTSydiaUWPqhlEP2rpYL',
-#     access_token='qshrgQGBHcwWWuWFBK8Y9PpFUqcaSv85',
-# )
+# client = DevelopmentClient()
+# config = JWTAuth.from_settings_file('config.json')
+auth_token = "qshrgQGBHcwWWuWFBK8Y9PpFUqcaSv85"
+config = OAuth2(
+    client_id='qgbl5vbwefkfx8h0rfudledazlkpp2c0',
+    client_secret='cEcc6w1PIOchMTSydiaUWPqhlEP2rpYL',
+    access_token='f{auth_token}',
+)
 client = Client(config)
 
 ## current user
 
 # upload file
-def upload(binary):
+def upload(binary, token):
     """
     uploads to dl_binaries folderkkkkkkkkkkk
+    both imputs instrings...
     """
+    global auth_token
+    auth_token = token
     user = client.user().get()
     print('The current user ID is {0}'.format(user.id))
     root_folder = client.folder(folder_id='0').get() # get root folder

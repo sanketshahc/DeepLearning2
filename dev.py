@@ -316,6 +316,8 @@ def prob1_2():
 # classes.groupby('class id').agg(lambda x: set(x).pop()).to_dict()['file']
 ###
 
+FILE = "binary"
+BOX_AUTH = "auth_code_here"
 
 hypes = {
     "EPOCHS": 5,
@@ -349,7 +351,7 @@ def save_bin(name, object):
         file = open(f"pickled_binaries/{name}", "wb")
         pickle.dump(object, file)
         file.close()
-    # box.upload(f'{name}')
+    box.upload(f'{name}', f'{BOX_AUTH}')
 
 
 ## PETnet data
@@ -730,28 +732,16 @@ def problem3_1():
 ### CLI code
 ########
 if __name__ == "__main__":
-
-
     parser = ArgumentParser()
-
-    # def prob3_runner():
-    #     return update_hypes()
-    #
-    # class Run(Action):
-    #     def __init__(self, **kwargs):
-    #         super(Run, self).__init__( **kwargs)
-    #     def __call__(self, parser, namespace, values, option_string=None):
-    #         return prob3_runner()
-
     parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
     parser.add_argument("--RATE",type=float,default= .01,help="learning rate")
     parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
     parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
     parser.add_argument("--RC", default=0, help="regularizer")
     parser.add_argument("--MOMENTUM", default=0,type=float, help="Momentum")
-    parser.add_argument("--FILE", type=str)
+    parser.add_argument("--FILE", type=str, help="Bin file name")
+    parser.add_argument("--BOX_AUTH", type=str)
     args = parser.parse_known_args()[0]
-    # parser.add_argument("--RUN", action=Run, help="Run")
 
     def command(func):
         global hypes
@@ -761,7 +751,10 @@ if __name__ == "__main__":
         hypes['BATCH'] = args.BATCH
         hypes['RATE'] = args.RATE
         hypes['RC'] = args.RC
-
+        global FILE
+        FILE = args.FILE
+        global BOX_AUTH
+        BOX_AUTH = args.BOX_AUTH
         return func()
     # print(hypes)
     ## name/main is for a functioncall that only should be called when module is main mofule running,
@@ -769,7 +762,6 @@ if __name__ == "__main__":
 
     FUNCTION_MAP = {'problem3_1' : problem3_1,
                     'problem2b' : problem2b}
-
     parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
     args = parser.parse_args()
     command(FUNCTION_MAP[args.RUN])
