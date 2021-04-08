@@ -684,10 +684,10 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
                 loss = criterion(y_hat, y)
                 loss_total += loss.item()
         else:
+            optimizer.zero_grad()
             y_hat = model(x)
             loss = criterion(y_hat, y)
             loss_total += loss.item()
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         if batch_count % 250 == 0:
@@ -728,8 +728,8 @@ def problem3_1():
             running_loss += loss.item()
             if i % 250 == 0:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+                    (epoch + 1, i + 1, running_loss))
+                # running_loss = 0.0
             
         correct = 0
         total = 0
@@ -737,7 +737,7 @@ def problem3_1():
             for data in cifar_test_Loader:
                 images, labels = data
                 outputs = network(images)
-                _, predicted = torch.max(outputs.data, 1)
+                _, predicted = torch.max(outputs.data, -1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
