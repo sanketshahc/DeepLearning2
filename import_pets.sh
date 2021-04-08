@@ -38,7 +38,7 @@ for FLE in ${MYDIR}/resources/images/*.jpg;
 do
     FNAME=$(echo $(basename ${FLE}) | sed 's/_[0-9].*//g');
     # echo $FLE
-    DEST="${MYDIR}/resources/test_images/${FNAME}"
+    DEST="${MYDIR}/resources/images/${FNAME}"
     # printf $FLE
     mkdir -pv ${DEST};
     # echo ${DEST}
