@@ -351,7 +351,7 @@ def save_bin(name, object):
         file = open(f"pickled_binaries/{name}", "wb")
         pickle.dump(object, file)
         file.close()
-    box.upload(f'{name}', f'{BOX_AUTH}')
+    # box.upload(f'{name}', f'{BOX_AUTH}')
 
 
 ## PETnet data
