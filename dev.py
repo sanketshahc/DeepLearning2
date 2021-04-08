@@ -755,6 +755,7 @@ def problem3_1():
         # network.train()
         training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
         y_arg = training_batches[2]
+        print(y_arg.shape, labels.shape
         assert y_arg == labels, print(y_arg, labels)
         y_hat_arg = training_batches[1].argmax(dim=-1)
         # count_correct_training += (y_arg == y_hat_arg).sum()
