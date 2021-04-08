@@ -759,6 +759,7 @@ def problem3_1():
         # count_correct_training += (y_arg == y_hat_arg).sum()
         loss_training.append(training_batches[0])
         _, predicted = torch.max(training_batches[1].data, -1)
+        # print(predicted)
         # total += labels.size(0)
         count_correct_training += (predicted == y_arg).sum().item()
     #     # testing
@@ -770,7 +771,7 @@ def problem3_1():
     #     loss_testing.append(testing_batches[0])
         accuracy = (count_correct_training / training_batches[3])
     #     accuracy_test = (count_correct_testing / len(cifar_test)).item()
-        print('training_loss', training_batches[0], 'accuracy', accuracy)
+        print('training_loss', training_batches[0], 'cprrect', count_correct_training,'accuracy', accuracy)
         
     #     print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
     #     print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
