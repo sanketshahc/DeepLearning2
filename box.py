@@ -11,8 +11,8 @@ import os
 # config = JWTAuth.from_settings_file('config.json')
 auth_token = "qshrgQGBHcwWWuWFBK8Y9PpFUqcaSv85"
 config = OAuth2(
-    client_id='qgbl5vbwefkfx8h0rfudledazlkpp2c0',
-    client_secret='cEcc6w1PIOchMTSydiaUWPqhlEP2rpYL',
+    client_id='oxcrqrz4627hvlr685mdf31ydqss91tx',
+    client_secret='r4tPi2lrXCBZc515lHyeEJh1Q2NQoycp',
     access_token='f{auth_token}',
 )
 try:
