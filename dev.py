@@ -744,11 +744,7 @@ if __name__ == "__main__":
     #         return prob3_runner()
 
     parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
-    parser.add_argument(
-        "--RATE",
-        type=float,
-        default= .01,
-        help="learning rate")
+    parser.add_argument("--RATE",type=float,default= .01,help="learning rate")
     parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
     parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
     parser.add_argument("--RC", default=0, help="regularizer")
