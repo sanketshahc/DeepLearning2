@@ -740,7 +740,7 @@ if __name__ == "__main__":
     parser.add_argument("--RATE",type=float,default= .01,help="learning rate")
     parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
     parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
-    parser.add_argument("--RC", default=0, help="regularizer")
+    parser.add_argument("--RC", type=int,default=0, help="regularizer")
     parser.add_argument("--MOMENTUM", default=0,type=float, help="Momentum")
     parser.add_argument("--FILE", type=str, help="Bin file name")
     parser.add_argument("--BOX_AUTH", type=str)
