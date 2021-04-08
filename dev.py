@@ -568,7 +568,8 @@ def target_transform_cifar(y):
     return y
 ## Data import / load
 # m, s = cifar_describe()
-m, s = [0.49139956, 0.4821574,  0.44653055], [0.24703272, 0.24348505, 0.26158777]
+# m, s = [0.49139956, 0.4821574,  0.44653055], [0.24703272, 0.24348505, 0.26158777]
+m, s = [0.5, 0.5,  0.5], [0.5, 0.5, 0.5]
 def transform_cifar(img_obj):
     img = transforms.Resize((224, 224))(img_obj)  # must curry arg
     img = transforms.ToTensor()(img)  # 0 to 1 tensor
@@ -580,7 +581,7 @@ cifar = datasets.CIFAR10(
     './resources/cifar/',
     True,
     transform_cifar,
-    target_transform_cifar,
+    # target_transform_cifar,
     download=True
 )
 
@@ -588,7 +589,7 @@ cifar_test = datasets.CIFAR10(
     './resources/cifar/',
     False,
     transform_cifar,
-    target_transform_cifar,
+    # target_transform_cifar,
     download=True
 )
 
@@ -668,7 +669,6 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
             y_hat = model(x)
             loss = criterion(y_hat, y)
             loss_total += loss.item()
-        if not is_val:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
