@@ -743,8 +743,8 @@ def problem3_1():
             correct += (predicted == labels).sum().item()
             print(correct, total)
 
-            print('Accuracy of the network on the 10000 test images: %d %%' % (
-                100 * correct / total))
+        print('Accuracy of the network on the 10000 test images: %d %%' % (
+            100 * correct / total))
 
     # for epoch in range(hypes["EPOCHS"]):
         count_correct_training = 0
