@@ -761,8 +761,8 @@ def problem3_1():
         # count_correct_training += (y_arg == y_hat_arg).sum()
         loss_training.append(training_batches[0])
         # _, predicted = torch.max(out.data, -1)
-        assert (training_batches[1] == outputs).sum() == 64, print(training_batches[1], outputs)
-        assert (y_hat_arg == predicted).sum() == 64, print(y_hat_arg, predicted)
+        assert (training_batches[1] == outputs).sum() == 64, print((training_batches[1] == outputs),training_batches[1].shape, outputs.shape)
+        assert (y_hat_arg == predicted).sum() == 64, print((y_hat_arg == predicted), y_hat_arg, predicted)
         # assert predicted == 
         # print(predicted)
         # total += labels.size(0)
