@@ -17,7 +17,7 @@ import PIL.Image as pil
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser, Action
-
+import box
 
 Lambda = transforms.Lambda
 
@@ -291,6 +291,13 @@ def prob1_2():
 # datasets reorganized with bash script
 # Unzip, Create Dataset object
 
+hypes = {
+    "EPOCHS": 5,
+    "BATCH": 1,  # 32, 16, 64
+    "RATE": .01,  # .1 .05 .01 .05, .02 .025
+    "MOMENTUM": .2,
+    "RC": .005  # .01 .005
+}
 
 # typically want to pass in image object here....
 # you can do a transforms.Compose or just custom fn...
@@ -307,24 +314,24 @@ def transform_pets(img_obj):
 
 
 def save_bin(name, object):
-    file = open(f"pickled_binaries/{name}.bin", "wb")
-    pickle.dump(object, file)
-    file.close()
+    if type(object) == torch.Tensor:
+        name = f'{name}.pt'
+        torch.save(object, f"pickled_binaries/{name}")
+    else:
+        name = f'{name}.bin'
+        file = open(f"pickled_binaries/{name}", "wb")
+        pickle.dump(object, file)
+        file.close()
+    box.upload(f'{name}')
 
-
-pet_net = models.resnet18(pretrained=True, progress=True)  # weights should be loaded to a 'cache'
-# hot vector helper..label processing....
-# class id species breed
-trainingd_root = './resources/images'
-testingd_root = './resources/test_images'
-annot_table = pd.read_csv(
-    './resources/annotations/list.txt',
-    ' ',
-    skiprows=(0, 1, 2, 3, 4, 5),
-    names=["file", "class id", "species", "breed"],
-    header=0
-)
-targets = annot_table.loc[:, ['file', 'class id']]
+# annot_table = pd.read_csv(
+#     './resources/annotations/list.txt',
+#     ' ',
+#     skiprows=(0, 1, 2, 3, 4, 5),
+#     names=["file", "class id", "species", "breed"],
+#     header=0
+# )
+# targets = annot_table.loc[:, ['file', 'class id']]
 # todo for hot helper fn, con to np array.
 # this is for the fc output.....
 
@@ -341,11 +348,14 @@ targets = annot_table.loc[:, ['file', 'class id']]
 # classes.groupby('class id').agg(lambda x: set(x).pop()).to_dict()['file']
 ###
 
-# sample_pairs_training = datasets.folder.ImageFolder(trainingd_root, transform_pets)
-# sample_pairs_testing = datasets.folder.ImageFolder(testingd_root, transform_pets)
-# training_loader = DataLoader(sample_pairs_training)
-# testing_loader = DataLoader(sample_pairs_testing)
+## PETnet data
 
+trainingd_root = './resources/images'
+testingd_root = './resources/test_images'
+sample_pairs_training = datasets.folder.ImageFolder(trainingd_root, transform_pets)
+sample_pairs_testing = datasets.folder.ImageFolder(testingd_root, transform_pets)
+training_loader = DataLoader(sample_pairs_training)
+testing_loader = DataLoader(sample_pairs_testing)
 
 # no target transform needed here, because sanket-net already has it embedded
 
@@ -361,53 +371,110 @@ class Identity(nn.Module):
         return x
 
 
-pet_net.fc = Identity()
-pet_net.train()
+# def build_maps_tensor(loader, samples_lim=None):
+#     feature_maps = None
+#     labels = None
+#     count = 0
+#     for x, y in loader:
+#         count += 1
+#         if count > 1:
+#             feature_map = pet_net(x).detach()
+#             feature_maps = torch.vstack((feature_maps, feature_map))
+#             labels = torch.vstack((labels, y))
+#         if count == 1:
+#             feature_maps = pet_net(x).detach()
+#             assert y.shape == (1,), print(y.shape)
+#             labels = y
+#         if samples_lim:
+#             if count == samples_lim:
+#                 break
+#         if count % 100 == 0:
+#             print(f'feature mapping {count}')
+
+#     assert feature_maps.shape[-1] == 512, print(feature_maps.shape)
+#     assert labels.shape[-2] == count, print(labels.shape)
+#     return feature_maps, labels
 
 
-def build_maps(loader, samples_lim=None):
-    # building the feature map...training set
-    feature_maps = None
-    labels = None
-    count = 0
-    for x, y in loader:
-        count += 1
-        if count > 1:
-            feature_map = pet_net(x).detach().numpy()
-            feature_maps = np.vstack((feature_maps, feature_map))
-            labels = np.vstack((labels, y.numpy()))
-        if count == 1:
-            feature_maps = pet_net(x).detach().numpy()
-            assert y.shape == (1,), print(y.shape)
-            labels = y.numpy()
-        if samples_lim:
-            if count == samples_lim:
-                break
-        if count % 100 == 0:
-            print(f'feature mapping {count}')
+# def build_maps(loader, samples_lim=None):
+#     # building the feature map...training set
+#     feature_maps = None
+#     labels = None
+#     count = 0
+#     for x, y in loader:
+#         count += 1
+#         if count > 1:
+#             feature_map = pet_net(x).detach().numpy()
+#             feature_maps = np.vstack((feature_maps, feature_map))
+#             labels = np.vstack((labels, y.numpy()))
+#         if count == 1:
+#             feature_maps = pet_net(x).detach().numpy()
+#             assert y.shape == (1,), print(y.shape)
+#             labels = y.numpy()
+#         if samples_lim:
+#             if count == samples_lim:
+#                 break
+#         if count % 100 == 0:
+#             print(f'feature mapping {count}')
 
-    assert feature_maps.shape[-1] == 512, print(feature_maps.shape)
-    assert labels.shape[-2] == count, print(labels.shape)
-    return feature_maps, labels
+#     assert feature_maps.shape[-1] == 512, print(feature_maps.shape)
+#     assert labels.shape[-2] == count, print(labels.shape)
+#     return feature_maps, labels
+
+# def problem2a():
+#     ##
+#     # Hyperparameters
+#     ##
+
+#     hypes = {
+#         "EPOCHS": 1000,
+#         "BATCH": 256,
+#         "RATE": .01,
+#         "MOMENTUM": .2,
+#         "RC": .05
+#     }
+#     # building the feature map...training set
+    
+#     # hot vector helper..label processing....
+#     # class id species breed
+#     pet_net = models.resnet18(pretrained=True, progress=True)  # weights should be loaded to a 'cache'
+#     pet_net.fc = Identity()
+#     pet_net.eval()
+#     inputs, targets = build_maps_tensor(training_loader)
+#     test_inputs, test_targets = build_maps_tensor(testing_loader)
+
+#     # save_bin('feature_map', inputs)
+#     # save_bin('labels', targets)
+#     # save_bin('feature_map_t', test_inputs)
+#     # save_bin('labels_t', test_targets)
+#     inputs, targets = SANKETNET.randomize_helper(*(_inputs,_targets))
+#     test_inputs, test_targets = SANKETNET.randomize_helper(*(_test_inputs,_test_targets))
+#     network = SANKETNET.Single_Layer_Network    
+#     return 
 
 # Problem_2 Main Function
 # Taken from asgn1
-def sanket_net(regularization_level):
+def problem2b(regularization_level):
     ##
     # Hyperparameters
     ##
 
-    hypes = {
-        "EPOCHS": 1000,
-        "BATCH": 256,
-        "RATE": .01,
-        "MOMENTUM": .2,
-        "RC": .05
-    }
+    # hypes = {
+    #     "EPOCHS": 1000,
+    #     "BATCH": 256,
+    #     "RATE": .01,
+    #     "MOMENTUM": .2,
+    #     "RC": .05
+    # }
     SANKETNET.update_hypers(hypes)
     # 35% testing accuracy, 56% training
-
-    SANKETNET.INPUT_NORM_MODE = 'z_feature'
+    # building the feature map...training set
+    pet_net = models.resnet18(pretrained=True, progress=True)  # weights should be loaded to a 'cache'
+    # hot vector helper..label processing....
+    # class id species breed
+    pet_net.fc = Identity()
+    pet_net.eval()
+    # SANKETNET.INPUT_NORM_MODE = 'z_feature'
     # inputs, targets = build_maps(training_loader)
     # test_inputs, test_targets = build_maps(testing_loader)
     # targets = SANKETNET.hot_helper(targets.flatten())[0]
@@ -421,10 +488,8 @@ def sanket_net(regularization_level):
     _targets = pickle.load(open('pickled_binaries/labels.bin', "rb"))
     _test_inputs = pickle.load(open('pickled_binaries/feature_map_t.bin', "rb"))
     _test_targets = pickle.load(open('pickled_binaries/labels_t.bin', "rb"))
-
     inputs, targets = SANKETNET.randomize_helper(*(_inputs,_targets))
     test_inputs, test_targets = SANKETNET.randomize_helper(*(_test_inputs,_test_targets))
-
     network = SANKETNET.Single_Layer_Network(
         inputs,
         targets,
@@ -438,8 +503,6 @@ def sanket_net(regularization_level):
     )
 
     network.train(regularization_level)
-    # confusion matrices from eval arrays
-
     training_accuracies = SANKETNET.DataSimulatorHelper.accuracy_list(
         network.training_eval_array, "Training")
     testing_accuracies = SANKETNET.DataSimulatorHelper.accuracy_list(
@@ -451,7 +514,6 @@ def sanket_net(regularization_level):
         dep_label="Accuracy",
         title="Accuracy for Test and Training Data: Pets"
     )
-
     save_bin('pets', network)
     return network
 
@@ -519,13 +581,6 @@ def sanket_net(regularization_level):
 # filters for the first convolutional layer. Describe your model’s architecture and your design
 # choices. What is your final accuracy? Note: Your model should perform better than the one in
 # Part 1 and Part 2. Solution:
-CHP = {
-    "EPOCHS": 5,
-    "BATCH": 1,  # 32, 16, 64
-    "RATE": .01,  # .1 .05 .01 .05, .02 .025
-    "MOMENTUM": .2,
-    "RC": .005  # .01 .005
-}
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -614,23 +669,23 @@ class TorchNet(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         # print('conv1 complete')
-        assert x.shape == (CHP["BATCH"], 64, 224, 224), x.shape
+        assert x.shape == (hypes["BATCH"], 64, 224, 224), x.shape
         x = Mish()(x)
         x = self.max_pool(x)
-        assert x.shape == (CHP["BATCH"], 64, 112, 112), x.shape
+        assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
         # print('Maxpool complete')
         x = self.conv2(x)
-        assert x.shape == (CHP["BATCH"], 128, 112, 112), x.shape
+        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
         # print('conv2 complete')
         x = Mish()(x)
         x = self.conv3(x)
-        assert x.shape == (CHP["BATCH"], 128, 112, 112), x.shape
+        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
         # print('conv3 complete')
         x = Mish()(x)
         x = self.avg_pool(x)
-        assert x.shape == (CHP["BATCH"], 128, 14, 14), x.shape
+        assert x.shape == (hypes["BATCH"], 128, 14, 14), x.shape
         # print('avgpool complete')
-        x = x.view(CHP["BATCH"], 25088)
+        x = x.view(hypes["BATCH"], 25088)
         x = self.lin1(x)
         # print('lin1 complete')
         x = nn.ReLU()(x)
@@ -651,12 +706,13 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
         x = x.to(device)
         y = y.to(device)
         batch_count+=1
-        # assert x.shape[0] == CHP["BATCH"], x.shape
+        # assert x.shape[0] == hypes["BATCH"], x.shape
         if is_val:
             model.eval()
             with torch.no_grad():
                 y_hat = model(x)
                 loss = criterion(y_hat, y)
+                optimizer.step()
                 loss_total += loss.item()
         else:
             y_hat = model(x)
@@ -665,25 +721,24 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
         if not is_val:
             optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
         if batch_count % 250 == 0:
             print(batch_count,' batches complete')
     return loss_total, y_hat, y
 
 def problem3_1():
-    print(CHP)
-    cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=CHP['BATCH'])
-    cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=CHP['BATCH'])
+    print(hypes)
+    cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
+    cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
     network = TorchNet()
     network.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(network.parameters(), lr=CHP["RATE"], momentum=CHP["MOMENTUM"])
+    optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
     count_epoch = 0
     accuracy = 0
     accuracy_test = 0
     loss_testing = []
     loss_training = []
-    for epoch in range(CHP["EPOCHS"]):
+    for epoch in range(hypes["EPOCHS"]):
         count_correct_training = 0
         count_correct_testing = 0
         count_epoch+=1
@@ -711,8 +766,9 @@ def problem3_1():
         print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
         print('out of', len(cifar), len(cifar_test))
     metrics = (loss_training,loss_testing,accuracy,accuracy_test)
-    torch.save(network, './pickled_binaries/torchnet.pt',)
-    save_bin('torchnet_metrics', metrics)
+    save_bin(f'{FILE}', network)
+    save_bin(f'{FILE}_metrics', metrics)
+    
     return network,metrics
 ## todo save dict
 ## visualizing features (tile, view, easy method)
@@ -726,44 +782,51 @@ def problem3_1():
 ##########
 ### CLI code
 ########
-parser = ArgumentParser()
+if __name__ == "__main__":
 
-# def prob3_runner():
-#     return update_hypes()
-#
-# class Run(Action):
-#     def __init__(self, **kwargs):
-#         super(Run, self).__init__( **kwargs)
-#     def __call__(self, parser, namespace, values, option_string=None):
-#         return prob3_runner()
 
-parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
-parser.add_argument(
-    "--RATE",
-    type=float,
-    default= .01,
-    help="learning rate")
-parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
-parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
-parser.add_argument("--RC", default=0, help="regularizer")
-parser.add_argument("--MOMENTUM", default=0,type=float, help="Momentum")
-args = parser.parse_known_args()[0]
-# parser.add_argument("--RUN", action=Run, help="Run")
+    parser = ArgumentParser()
 
-def problem3_command():
-    global CHP
-    CHP['EPOCHS'] = args.EPOCHS
-    CHP['MOMENTUM'] = args.MOMENTUM
-    CHP['DEVICE'] = args.DEVICE
-    CHP['BATCH'] = args.BATCH
-    CHP['RATE'] = args.RATE
-    CHP['RC'] = args.RC
-    return problem3_1()
-# print(CHP)
-## name/main is for a functioncall that only should be called when module is main mofule running,
-# otherwise would run every time imported.
+    # def prob3_runner():
+    #     return update_hypes()
+    #
+    # class Run(Action):
+    #     def __init__(self, **kwargs):
+    #         super(Run, self).__init__( **kwargs)
+    #     def __call__(self, parser, namespace, values, option_string=None):
+    #         return prob3_runner()
 
-FUNCTION_MAP = {'problem3_1' : problem3_command()}
-parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
-args = parser.parse_args()
-FUNCTION_MAP[args.RUN]()
+    parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
+    parser.add_argument(
+        "--RATE",
+        type=float,
+        default= .01,
+        help="learning rate")
+    parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
+    parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
+    parser.add_argument("--RC", default=0, help="regularizer")
+    parser.add_argument("--MOMENTUM", default=0,type=float, help="Momentum")
+    parser.add_argument("--FILE", type=str)
+    args = parser.parse_known_args()[0]
+    # parser.add_argument("--RUN", action=Run, help="Run")
+
+    def command(func):
+        global hypes
+        hypes['EPOCHS'] = args.EPOCHS
+        hypes['MOMENTUM'] = args.MOMENTUM
+        hypes['DEVICE'] = args.DEVICE
+        hypes['BATCH'] = args.BATCH
+        hypes['RATE'] = args.RATE
+        hypes['RC'] = args.RC
+
+        return func()
+    # print(hypes)
+    ## name/main is for a functioncall that only should be called when module is main mofule running,
+    # otherwise would run every time imported.
+
+    FUNCTION_MAP = {'problem3_1' : problem3_1,
+                    'problem2b' : problem2b}
+
+    parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
+    args = parser.parse_args()
+    command(FUNCTION_MAP[args.RUN])
