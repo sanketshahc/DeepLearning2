@@ -432,12 +432,11 @@ def problem2b(regularization_level):
         _targets = SANKETNET.hot_helper(targets.flatten())[0]
         _test_targets = SANKETNET.hot_helper(test_targets.flatten())[0]
         inputs, targets = SANKETNET.randomize_helper(*(_inputs,_targets))
-        test_inputs, test_targets = SANKETNET.randomize_helper(*(_test_inputs,_test_targets))
-    
-    save_bin('feature_map', inputs)
-    save_bin('labels', targets)
-    save_bin('feature_map_t', test_inputs)
-    save_bin('labels_t', test_targets)
+        test_inputs, test_targets = SANKETNET.randomize_helper(*(_test_inputs,_test_targets))    
+        save_bin('feature_map', inputs)
+        save_bin('labels', targets)
+        save_bin('feature_map_t', test_inputs)
+        save_bin('labels_t', test_targets)
     network = SANKETNET.Single_Layer_Network(
         inputs,
         targets,
@@ -460,9 +459,9 @@ def problem2b(regularization_level):
         *(training_accuracies, testing_accuracies),
         ind_label='Epochs',
         dep_label="Accuracy",
-        title="Accuracy for Test and Training Data: Pets"
+        title=f"Accuracy for Test and Training Data ({FILE})"
     )
-    save_bin('pets', network)
+    save_bin(f'{FILE}', network)
     return network
 
 
