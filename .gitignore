@@ -1,12 +1,5 @@
 /transfer_learning/
-/resources/cifar/cifar-10-batches-py/batches.meta
-/resources/cifar/cifar-10-batches-py/data_batch_1
-/resources/cifar/cifar-10-batches-py/data_batch_2
-/resources/cifar/cifar-10-batches-py/data_batch_3
-/resources/cifar/cifar-10-batches-py/data_batch_4
-/resources/cifar/cifar-10-batches-py/data_batch_5
-/resources/cifar/cifar-10-batches-py/readme.html
-/resources/cifar/cifar-10-batches-py/test_batch
+/resources/cifar/.*
 /pickled_binaries/.*
 #/resources/test_images/.*
 #/resources/images/.*
