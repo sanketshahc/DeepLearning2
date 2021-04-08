@@ -84,3 +84,4 @@ wcwidth
 webencodings
 Werkzeug
 widgetsnbextension
+boxsdk
