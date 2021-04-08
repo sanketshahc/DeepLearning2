@@ -376,7 +376,7 @@ class Identity(nn.Module):
         return x
 
 
-def build_maps(loader, samples_lim=None):
+def build_maps(loader, model, samples_lim=None):
     # building the feature map...training set
     feature_maps = None
     labels = None
@@ -384,11 +384,11 @@ def build_maps(loader, samples_lim=None):
     for x, y in loader:
         count += 1
         if count > 1:
-            feature_map = pet_net(x).detach().numpy()
+            feature_map = model(x).detach().numpy()
             feature_maps = np.vstack((feature_maps, feature_map))
             labels = np.vstack((labels, y.numpy()))
         if count == 1:
-            feature_maps = pet_net(x).detach().numpy()
+            feature_maps = model(x).detach().numpy()
             assert y.shape == (1,), print(y.shape)
             labels = y.numpy()
         if samples_lim:
@@ -429,8 +429,8 @@ def problem2b():
         test_inputs = pickle.load(open('pickled_binaries/feature_map_t.bin', "rb"))
         test_targets = pickle.load(open('pickled_binaries/labels_t.bin', "rb"))
     else:    
-        _inputs, _targets = build_maps(training_loader)
-        _test_inputs, _test_targets = build_maps(testing_loader)
+        _inputs, _targets = build_maps(training_loader, pet_net)
+        _test_inputs, _test_targets = build_maps(testing_loader, pet_net)
         _targets = SANKETNET.hot_helper(targets.flatten())[0]
         _test_targets = SANKETNET.hot_helper(test_targets.flatten())[0]
         inputs, targets = SANKETNET.randomize_helper(*(_inputs,_targets))
