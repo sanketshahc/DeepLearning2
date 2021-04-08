@@ -605,45 +605,63 @@ class Mish(nn.Module):
 # q if i wanted to just take weights from another model, for the fully connected part i'd have to
 #  use the same batch size and number of features right? sounds kinds dumn...
 class TorchNet(nn.Module):
-    def __init__(self, batchnorm = False):
+    def __init__(self):
         super(TorchNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, (11, 11), padding=(5,))
-        self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.avg_pool = nn.AvgPool2d(kernel_size=8, stride=8)
-        self.conv2 = nn.Conv2d(64, 128, (11, 11), padding=(5,))
-        self.conv3 = nn.Conv2d(128, 128, (3, 3), padding=(1,))
-        self.lin1 = nn.Linear(25088, 10)
-        # self.lin2 = nn.Linear(392, 10)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+    # def __init__(self, batchnorm = False):
+    #     super(TorchNet, self).__init__()
+    #     self.conv1 = nn.Conv2d(3, 64, (11, 11), padding=(5,))
+    #     self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+    #     self.avg_pool = nn.AvgPool2d(kernel_size=8, stride=8)
+    #     self.conv2 = nn.Conv2d(64, 128, (11, 11), padding=(5,))
+    #     self.conv3 = nn.Conv2d(128, 128, (3, 3), padding=(1,))
+    #     self.lin1 = nn.Linear(25088, 10)
+    #     # self.lin2 = nn.Linear(392, 10)
         
 
-    # q are we to average pool to 1 pixel?
-    def forward(self, x):
-        x = self.conv1(x)
-        # print('conv1 complete')
-        assert x.shape == (hypes["BATCH"], 64, 224, 224), x.shape
-        x = Mish()(x)
-        x = self.max_pool(x)
-        assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
-        # print('Maxpool complete')
-        x = self.conv2(x)
-        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
-        # print('conv2 complete')
-        x = Mish()(x)
-        x = self.conv3(x)
-        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
-        # print('conv3 complete')
-        x = Mish()(x)
-        x = self.avg_pool(x)
-        assert x.shape == (hypes["BATCH"], 128, 14, 14), x.shape
-        # print('avgpool complete')
-        x = x.view(hypes["BATCH"], 25088)
-        y = self.lin1(x)
-        # print('lin1 complete')
-        # x = nn.ReLU()(x)
-        # x = self.lin2(x)
-        # print('lin2 complete')
+    # # q are we to average pool to 1 pixel?
+    # def forward(self, x):
+    #     x = self.conv1(x)
+    #     # print('conv1 complete')
+    #     assert x.shape == (hypes["BATCH"], 64, 224, 224), x.shape
+    #     x = Mish()(x)
+    #     x = self.max_pool(x)
+    #     assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
+    #     # print('Maxpool complete')
+    #     x = self.conv2(x)
+    #     assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
+    #     # print('conv2 complete')
+    #     x = Mish()(x)
+    #     x = self.conv3(x)
+    #     assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
+    #     # print('conv3 complete')
+    #     x = Mish()(x)
+    #     x = self.avg_pool(x)
+    #     assert x.shape == (hypes["BATCH"], 128, 14, 14), x.shape
+    #     # print('avgpool complete')
+    #     x = x.view(hypes["BATCH"], 25088)
+    #     y = self.lin1(x)
+    #     # print('lin1 complete')
+    #     # x = nn.ReLU()(x)
+    #     # x = self.lin2(x)
+    #     # print('lin2 complete')
         
-        return y
+    #     return y
 
 
 def batches_loop(loader, model, criterion, optimizer, is_val=False):
