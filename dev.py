@@ -670,8 +670,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
             loss_total += loss.item()
         if not is_val:
             optimizer.zero_grad()
-            optimizer.step()
             loss.backward()
+            optimizer.step()
         if batch_count % 250 == 0:
             print(batch_count,' batches complete')
         
