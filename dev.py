@@ -408,6 +408,7 @@ def problem2b():
     # Hyperparameters
     ##
     regularization_level = 2
+    print(hypes)
     # hypes = {
     #     "EPOCHS": 1000,
     #     "BATCH": 256,
@@ -431,8 +432,8 @@ def problem2b():
     else:    
         _inputs, _targets = build_maps(training_loader, pet_net)
         _test_inputs, _test_targets = build_maps(testing_loader, pet_net)
-        _targets = SANKETNET.hot_helper(targets.flatten())[0]
-        _test_targets = SANKETNET.hot_helper(test_targets.flatten())[0]
+        _targets = SANKETNET.hot_helper(_targets.flatten())[0]
+        _test_targets = SANKETNET.hot_helper(_test_targets.flatten())[0]
         inputs, targets = SANKETNET.randomize_helper(*(_inputs,_targets))
         test_inputs, test_targets = SANKETNET.randomize_helper(*(_test_inputs,_test_targets))    
         save_bin('feature_map', inputs)
