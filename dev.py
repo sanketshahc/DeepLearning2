@@ -755,12 +755,14 @@ def problem3_1():
     # network.train()
     training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
     y_arg = training_batches[2]
-    # y_hat_arg = training_batches[1].argmax(dim=-1)
+    assert y_arg == labels, print(y_arg, labels)
+    y_hat_arg = training_batches[1].argmax(dim=-1)
     # count_correct_training += (y_arg == y_hat_arg).sum()
     loss_training.append(training_batches[0])
     # _, predicted = torch.max(out.data, -1)
-    assert training_batches[1] == outputs
-    assert predicted == 
+    assert training_batches[1] == outputs, print(training_batches[1], outputs)
+    assert y_hat_arg == predicted, print(y_hat_arg, predicted)
+    # assert predicted == 
     # print(predicted)
     # total += labels.size(0)
     count_correct_training += (predicted == y_arg).sum().item()
