@@ -667,7 +667,7 @@ class TorchNet(nn.Module):
 def batches_loop(loader, model, criterion, optimizer, is_val=False):
     batch_count = 0
     loss_total = 0
-    
+    count_correct = 0
     # for x in loader:
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
@@ -692,10 +692,10 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
             optimizer.step()
         if batch_count % 250 == 0:
             print(batch_count,' batches complete')
-
-    y_hat_arg = y_hat.argmax(dim=-1)
-    count_correct += (y == y_hat_arg).sum()
-    accuracy = (count_correct / (batch_count * hypes["BATCH"]))
+        y_hat_arg = y_hat.argmax(dim=-1)
+        count_correct += (y == y_hat_arg).sum()
+    
+    accuracy = (count_correct / (batch_count * hypes["BATCH"]))    
     return loss_total, accuracy
 
 def problem3_1():
