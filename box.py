@@ -15,8 +15,10 @@ config = OAuth2(
     client_secret='cEcc6w1PIOchMTSydiaUWPqhlEP2rpYL',
     access_token='f{auth_token}',
 )
-client = Client(config)
-
+try:
+    client = Client(config)
+except Exception:
+    print("Error with auth code....")
 ## current user
 
 # upload file
@@ -27,13 +29,14 @@ def upload(binary, token):
     """
     global auth_token
     auth_token = token
-    user = client.user().get()
-    print('The current user ID is {0}'.format(user.id))
-    root_folder = client.folder(folder_id='0').get() # get root folder
-    print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'dl_binaries/{binary}')
-    a_file = root_folder.upload(file_path, file_name=binary)
-    print('{0} uploaded: '.format(a_file.get()['name']))
+    if client:
+        user = client.user().get()
+        print('The current user ID is {0}'.format(user.id))
+        root_folder = client.folder(folder_id='0').get() # get root folder
+        print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'dl_binaries/{binary}')
+        a_file = root_folder.upload(file_path, file_name=binary)
+        print('{0} uploaded: '.format(a_file.get()['name']))
 
 # get items in folder
 # items = root_folder.get_items(limit=100, offset=0)
