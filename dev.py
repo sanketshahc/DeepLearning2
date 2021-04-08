@@ -708,38 +708,60 @@ def problem3_1():
     accuracy_test = 0
     loss_testing = []
     loss_training = []
-    for epoch in range(hypes["EPOCHS"]):
-        count_correct_training = 0
-        count_correct_testing = 0
-        count_epoch+=1
-        print('EPOCH:', count_epoch)
-        # training
-        network.train()
-        training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
-        y_arg = training_batches[2]
-        y_hat_arg = training_batches[1].argmax(dim=-1)
-        count_correct_training += (y_arg == y_hat_arg).sum()
-        loss_training.append(training_batches[0])
+    for epoch in range(2):  # loop over the dataset multiple times
 
-        # testing
-        network.eval()
-        testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
-        yt_arg = testing_batches[2]
-        yt_hat_arg = testing_batches[1].argmax(dim=-1)
-        count_correct_testing += (yt_arg == yt_hat_arg).sum()
-        loss_testing.append(testing_batches[0])
-        accuracy = (count_correct_training / len(cifar)).item()
-        accuracy_test = (count_correct_testing / len(cifar_test)).item()
+        running_loss = 0.0
+        for i, data in enumerate(cifar_Loader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
 
-        print('training_loss', training_batches[0], 'accuracy', accuracy)
-        print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
-        print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
-        print('out of', len(cifar), len(cifar_test))
-    metrics = (loss_training,loss_testing,accuracy,accuracy_test)
-    save_bin(f'{FILE}', network)
-    save_bin(f'{FILE}_metrics', metrics)
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = network(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            running_loss += loss.item()
+            if i % 2000 == 1999:    # print every 2000 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                    (epoch + 1, i + 1, running_loss / 2000))
+                running_loss = 0.0
+    # for epoch in range(hypes["EPOCHS"]):
+    #     count_correct_training = 0
+    #     count_correct_testing = 0
+    #     count_epoch+=1
+    #     print('EPOCH:', count_epoch)
+    #     # training
+    #     network.train()
+    #     training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
+    #     y_arg = training_batches[2]
+    #     y_hat_arg = training_batches[1].argmax(dim=-1)
+    #     count_correct_training += (y_arg == y_hat_arg).sum()
+    #     loss_training.append(training_batches[0])
+
+    #     # testing
+    #     network.eval()
+    #     testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
+    #     yt_arg = testing_batches[2]
+    #     yt_hat_arg = testing_batches[1].argmax(dim=-1)
+    #     count_correct_testing += (yt_arg == yt_hat_arg).sum()
+    #     loss_testing.append(testing_batches[0])
+    #     accuracy = (count_correct_training / len(cifar)).item()
+    #     accuracy_test = (count_correct_testing / len(cifar_test)).item()
+
+    #     print('training_loss', training_batches[0], 'accuracy', accuracy)
+    #     print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
+    #     print('correc_training', count_correct_training, 'correct_testing', count_correct_testing)
+    #     print('out of', len(cifar), len(cifar_test))
+    # metrics = (loss_training,loss_testing,accuracy,accuracy_test)
+    # save_bin(f'{FILE}', network)
+    # save_bin(f'{FILE}_metrics', metrics)
     
-    return network,metrics
+    # return network,metrics
 ## todo save dict
 ## visualizing features (tile, view, easy method)
 
