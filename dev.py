@@ -673,8 +673,8 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     x = x['image']
     for x, y in loader:
         # model.train()
-        # x = x.to(device)
-        # y = y.to(device)
+        x = x.to(device)
+        y = y.to(device)
         batch_count+=1
         # assert x.shape[0] == hypes["BATCH"], x.shape
         if is_val:
@@ -754,6 +754,7 @@ def problem3_1():
         print('EPOCH:', count_epoch)
         # training
         # network.train()
+        network.train()
         training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
 
         # print(y_arg.shape, labels.shape)
@@ -769,7 +770,7 @@ def problem3_1():
         # total += labels.size(0)
         # count_correct_training += (predicted == y_arg).sum().item()
     #     # testing
-    #     network.eval()
+        network.eval()
         testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
         #     yt_arg = testing_batches[2]
         #     yt_hat_arg = testing_batches[1].argmax(dim=-1)
