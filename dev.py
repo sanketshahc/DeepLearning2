@@ -403,11 +403,11 @@ def build_maps(loader, samples_lim=None):
 
 # Problem_2 Main Function
 # Taken from asgn1
-def problem2b(regularization_level):
+def problem2b():
     ##
     # Hyperparameters
     ##
-
+    regularization_level = 2
     # hypes = {
     #     "EPOCHS": 1000,
     #     "BATCH": 256,
