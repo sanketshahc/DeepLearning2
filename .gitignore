@@ -1,6 +1,6 @@
 /transfer_learning/
-/resources/cifar/.*
-/pickled_binaries/.*
-#/resources/test_images/.*
-#/resources/images/.*
+/resources/cifar/**
+/pickled_binaries/**
+/resources/test_images/**
+/resources/images/**
 
