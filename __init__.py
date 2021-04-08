@@ -1,1 +1,0 @@
-git filter-branch --prune-empty -d /dev/shm/scratch --index-filter "git rm --cached -f --ignore-unmatch resources/cifar/cifar-10-python.tar.gz" --tag-name-filter cat -- --all
