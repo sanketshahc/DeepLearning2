@@ -736,7 +736,7 @@ def problem3_1():
         with torch.no_grad():
             for data in cifar_test_Loader:
                 images, labels = data
-                outputs = Torchnet(images)
+                outputs = network(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
