@@ -648,7 +648,7 @@ class TorchNet(nn.Module):
 def batches_loop(loader, model, criterion, optimizer, is_val=False):
     batch_count = 0
     loss_total = 0
-    model.train()
+    
     # for x in loader:
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
@@ -673,6 +673,7 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
             loss.backward()
         if batch_count % 250 == 0:
             print(batch_count,' batches complete')
+        model.train()
     return loss_total, y_hat, y
 
 def problem3_1():
