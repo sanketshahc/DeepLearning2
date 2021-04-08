@@ -653,13 +653,13 @@ def batches_loop(loader, model, criterion, optimizer, is_val=False):
     #     y = torch.ones(1, dtype=int)
     #     x = x['image']
     for x, y in loader:
-        model.train()
+        # model.train()
         x = x.to(device)
         y = y.to(device)
         batch_count+=1
         # assert x.shape[0] == hypes["BATCH"], x.shape
         if is_val:
-            model.eval()
+            # model.eval()
             with torch.no_grad():
                 y_hat = model(x)
                 loss = criterion(y_hat, y)
@@ -696,7 +696,7 @@ def problem3_1():
         count_epoch+=1
         print('EPOCH:', count_epoch)
         # training
-        # network.train()
+        network.train()
         training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
         y_arg = training_batches[2]
         y_hat_arg = training_batches[1].argmax(dim=-1)
@@ -704,7 +704,7 @@ def problem3_1():
         loss_training.append(training_batches[0])
 
         # testing
-        # network.eval()
+        network.eval()
         testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
         yt_arg = testing_batches[2]
         yt_hat_arg = testing_batches[1].argmax(dim=-1)
