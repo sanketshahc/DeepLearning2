@@ -758,7 +758,7 @@ def problem3_1():
         # y_hat_arg = training_batches[1].argmax(dim=-1)
         # count_correct_training += (y_arg == y_hat_arg).sum()
         loss_training.append(training_batches[0])
-        _, predicted = torch.max(y_hat.data, -1)
+        _, predicted = torch.max(training_batches[1].data, -1)
         # total += labels.size(0)
         count_correct_training += (predicted == y_arg).sum().item()
     #     # testing
