@@ -30,7 +30,10 @@ def upload(filename):
     print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
     file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'pickled_binaries/{filename}')
     print('path',file_path)
-    a_file = root_folder.upload(file_path, file_name=filename)
+    try:
+        a_file = root_folder.upload(file_path, file_name=filename)
+    except:
+        print('Upload FAILED. Likely Authentication issue...Need to reauthenticate.')
     print('{0} uploaded: '.format(a_file.get()['name']))
 
 # get items in folder
