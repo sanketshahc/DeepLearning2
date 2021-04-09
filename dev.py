@@ -568,8 +568,8 @@ def target_transform_cifar(y):
     return y
 ## Data import / load
 # m, s = cifar_describe()
-# m, s = [0.49139956, 0.4821574,  0.44653055], [0.24703272, 0.24348505, 0.26158777]
-m, s = [0.5, 0.5,  0.5], [0.5, 0.5, 0.5]
+m, s = [0.49139956, 0.4821574,  0.44653055], [0.24703272, 0.24348505, 0.26158777]
+# m, s = [0.5, 0.5,  0.5], [0.5, 0.5, 0.5]
 def transform_cifar(img):
     img = transforms.Resize((224, 224))(img)  # must curry arg
     img = transforms.ToTensor()(img)  # 0 to 1 tensor
