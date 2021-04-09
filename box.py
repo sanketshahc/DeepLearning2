@@ -1,7 +1,4 @@
-from boxsdk import DevelopmentClient
 from boxsdk import OAuth2, Client
-from boxsdk import JWTAuth
-
 
 import os
 # from boxsdk.exception import BoxAPIException
@@ -9,40 +6,39 @@ import os
 # from boxsdk.object.collaboration import CollaborationRole
 # client = DevelopmentClient()
 # config = JWTAuth.from_settings_file('config.json')
-auth_token = "qshrgQGBHcwWWuWFBK8Y9PpFUqcaSv85"
-config = OAuth2(
-    client_id='oxcrqrz4627hvlr685mdf31ydqss91tx',
-    client_secret='r4tPi2lrXCBZc515lHyeEJh1Q2NQoycp',
-    access_token='f{auth_token}',
+oauth = OAuth2(
+    client_id='df6mdynv4n5hkni08jb4zufbmki6r2rc',
+    client_secret='4ZQMQ1AAYxNMzpBB7KKqaQWchEXtdtLU',
+    access_token='shsRXKdhsXNTsHP6Ljc2IG9mNuojX4dM',
+    refresh_token='Im0STIkgCJcPn5bfvWUEain6czRTDeh5stsdUNXEcrTB63B1tNBh855Rl0qxScFi'
 )
-try:
-    client = Client(config)
-except Exception:
-    print("Error with auth code....")
-## current user
+
+# assert len(oauth) == 4
+client = Client(oauth)
 
 # upload file
-def upload(binary, token):
+def upload(filename):
     """
+    input string filename.
     uploads to dl_binaries folderkkkkkkkkkkk
     both imputs instrings...
     """
-    global auth_token
-    auth_token = token
-    if client:
-        user = client.user().get()
-        print('The current user ID is {0}'.format(user.id))
-        root_folder = client.folder(folder_id='0').get() # get root folder
-        print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
-        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'dl_binaries/{binary}')
-        a_file = root_folder.upload(file_path, file_name=binary)
-        print('{0} uploaded: '.format(a_file.get()['name']))
+
+    user = client.user().get()
+    print('The current user ID is {0}'.format(user.id))
+    root_folder = client.folder(folder_id='0').get() # get root folder
+    print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'pickled_binaries/{filename}')
+    print('path',file_path)
+    a_file = root_folder.upload(file_path, file_name=filename)
+    print('{0} uploaded: '.format(a_file.get()['name']))
 
 # get items in folder
 # items = root_folder.get_items(limit=100, offset=0)
 # print('This is the first 100 items in the root folder:')
 # for item in items:
 #   print("   " + item.name)
+
         
 # # delete a folder
 # client.make_request('DELETE', 'https://api.box.com/2.0/folders/FOLDER_ID?recursive=true')

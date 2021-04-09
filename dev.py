@@ -340,18 +340,18 @@ def transform_pets(img_obj):
     # print(img.shape)
     return img
 
-def save_bin(name, object):
+def save_bin(name, f_object):
     if not os.path.exists('pickled_binaries/'):
         os.makedirs('pickled_binaries/')
-    if type(object) == torch.Tensor:
+    if type(f_object) == torch.Tensor:
         name = f'{name}.pt'
-        torch.save(object, f"pickled_binaries/{name}")
+        torch.save(f_object, f"pickled_binaries/{name}")
     else:
         name = f'{name}.bin'
         file = open(f"pickled_binaries/{name}", "wb")
-        pickle.dump(object, file)
+        pickle.dump(f_object, file)
         file.close()
-    # box.upload(f'{name}', f'{BOX_AUTH}')
+    box.upload(f'{name}')
 
 
 ## PETnet data
