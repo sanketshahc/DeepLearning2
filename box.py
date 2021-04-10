@@ -1,20 +1,24 @@
 from boxsdk import OAuth2, Client
-
+import requests
 import os
 # from boxsdk.exception import BoxAPIException
 # from boxsdk.network.logging_network import LoggingNetwork
 # from boxsdk.object.collaboration import CollaborationRole
 # client = DevelopmentClient()
 # config = JWTAuth.from_settings_file('config.json')
-oauth = OAuth2(
-    client_id='df6mdynv4n5hkni08jb4zufbmki6r2rc',
-    client_secret='4ZQMQ1AAYxNMzpBB7KKqaQWchEXtdtLU',
-    access_token='shsRXKdhsXNTsHP6Ljc2IG9mNuojX4dM',
-    refresh_token='Im0STIkgCJcPn5bfvWUEain6czRTDeh5stsdUNXEcrTB63B1tNBh855Rl0qxScFi'
-)
+client_id='df6mdynv4n5hkni08jb4zufbmki6r2rc',
+client_secret='4ZQMQ1AAYxNMzpBB7KKqaQWchEXtdtLU',
+access_token='shsRXKdhsXNTsHP6Ljc2IG9mNuojX4dM',
+refresh_token='Im0STIkgCJcPn5bfvWUEain6czRTDeh5stsdUNXEcrTB63B1tNBh855Rl0qxScFi'
 
+
+params = {
+"client_id":client_id, 
+"client_secret":client_secret, 
+"refresh_token":refresh_token,
+"grant_type":"refresh_token"
+    }
 # assert len(oauth) == 4
-client = Client(oauth)
 
 # upload file
 def upload(filename):
@@ -23,19 +27,39 @@ def upload(filename):
     uploads to dl_binaries folderkkkkkkkkkkk
     both imputs instrings...
     """
-
-    user = client.user().get()
-    print('The current user ID is {0}'.format(user.id))
-    root_folder = client.folder(folder_id='0').get() # get root folder
-    print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'pickled_binaries/{filename}')
-    print('path',file_path)
     try:
-        a_file = root_folder.upload(file_path, file_name=filename)
+        oauth = OAuth2(
+            client_id=client_id,
+            client_secret=client_secret,
+            access_token=access_token,
+            refresh_token=refresh_token
+            )
+        client = Client(oauth)
+        user = client.user().get()
+        print('The current user ID is {0}'.format(user.id))
     except:
-        print('Upload FAILED. Likely Authentication issue...Need to reauthenticate.')
-    print('{0} uploaded: '.format(a_file.get()['name']))
-
+        print('Upload FAILED. Requesting Refresh TOken.')
+        r = requests.post("/oauth2/token/",params)
+        access_token = r.response["access_token"]
+        oauth = OAuth2(
+            client_id=client_id,
+            client_secret=client_secret,
+            access_token=access_token,
+            refresh_token=refresh_token
+            )
+        client = Client(oauth)
+        user = client.user().get()
+        print('The current user ID is {0}'.format(user.id))
+    
+    try:
+        root_folder = client.folder(folder_id='0').get() # get root folder
+        print('The root folder is owned by: {0}'.format(root_folder.owned_by['login']))
+        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'pickled_binaries/{filename}')
+        print('path',file_path)
+        a_file = root_folder.upload(file_path, file_name=filename)
+        print('{0} uploaded: '.format(a_file.get()['name']))
+    except:
+        "UPLOAD FAILED, auth problem."
 # get items in folder
 # items = root_folder.get_items(limit=100, offset=0)
 # print('This is the first 100 items in the root folder:')

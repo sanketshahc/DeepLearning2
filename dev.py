@@ -745,25 +745,20 @@ if __name__ == "__main__":
     parser.add_argument("--EPOCHS", type=int, default=100, help="number of epochs")
     parser.add_argument("--RATE",type=float,default= .01,help="learning rate")
     parser.add_argument("--BATCH", default=64, type=int, help="backend mode")
-    parser.add_argument("--DEVICE", default="gpu", help="cpu or gpu")
     parser.add_argument("--RC", type=float,default=0, help="regularizer")
     parser.add_argument("--MOMENTUM", default=0,type=float, help="Momentum")
     parser.add_argument("--FILE", type=str, help="Bin file name")
-    parser.add_argument("--BOX_AUTH", type=str)
     args = parser.parse_known_args()[0]
 
     def command(func):
         global hypes
         hypes['EPOCHS'] = args.EPOCHS
         hypes['MOMENTUM'] = args.MOMENTUM
-        hypes['DEVICE'] = args.DEVICE
         hypes['BATCH'] = args.BATCH
         hypes['RATE'] = args.RATE
         hypes['RC'] = args.RC
         global FILE
         FILE = args.FILE
-        global BOX_AUTH
-        BOX_AUTH = args.BOX_AUTH
         return func()
     # print(hypes)
     ## name/main is for a functioncall that only should be called when module is main mofule running,
