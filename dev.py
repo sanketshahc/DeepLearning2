@@ -19,6 +19,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser, Action
 import box
+import time
 
 Lambda = transforms.Lambda
 
@@ -344,10 +345,10 @@ def save_bin(name, f_object):
     if not os.path.exists('pickled_binaries/'):
         os.makedirs('pickled_binaries/')
     if type(f_object) == torch.Tensor:
-        name = f'{name}.pt'
+        name = f'{name}_{int(time.time())}.pt'
         torch.save(f_object, f"pickled_binaries/{name}")
     else:
-        name = f'{name}.bin'
+        name = f'{name}_{int(time.time())}.bin'
         file = open(f"pickled_binaries/{name}", "wb")
         pickle.dump(f_object, file)
         file.close()

@@ -21,7 +21,7 @@ ipykernel
 ipython
 ipython-genutils
 ipywidgets
-jedi==
+jedi
 Jinja2
 jsonschema
 jupyter
