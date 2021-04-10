@@ -360,7 +360,9 @@ def pet_dataset():
     testingd_root = './resources/test_images'
     sample_pairs_training = datasets.folder.ImageFolder(trainingd_root, transform_pets)
     sample_pairs_testing = datasets.folder.ImageFolder(testingd_root, transform_pets)
-    return DataLoader(sample_pairs_training), DataLoader(sample_pairs_testing)
+    label_dict_training = sample_pairs_training.class_to_idx
+    label_dict_testing = sample_pairs_testing.class_to_idx
+    return DataLoader(sample_pairs_training), DataLoader(sample_pairs_testing), label_dict_training, label_dict_testing
     
 
 # no target transform needed here, because sanket-net already has it embedded
@@ -400,7 +402,7 @@ def build_maps(loader, model, samples_lim=None):
     assert feature_maps.shape[-1] == 512, print(feature_maps.shape)
     assert labels.shape[-2] == count, print(labels.shape)
     return feature_maps, labels
-
+# todo must be MEAN PER CLASS ACCURACY....
 # Problem_2 Main Function
 # Taken from asgn1
 def problem2b():
@@ -422,7 +424,7 @@ def problem2b():
     pet_net = models.resnet18(pretrained=True, progress=True)  # weights should be loaded to a 'cache'
     pet_net.fc = Identity()
     pet_net.eval()
-    training_loader, testing_loader = pet_dataset()
+    training_loader, testing_loader, training_classes, testing_classes = pet_dataset()
     
     if os.path.exists('pickled_binaries/feature_map.bin'):
         inputs = pickle.load(open('pickled_binaries/feature_map.bin', "rb"))
@@ -457,6 +459,18 @@ def problem2b():
         network.training_eval_array, "Training")
     testing_accuracies = SANKETNET.DataSimulatorHelper.accuracy_list(
         network.testing_eval_array, "Testing")
+    acc_matrix = network.testing_eval_array.sum(0)
+    SANKETNET.Plot.confusion(acc_matrix, testing_classes)
+    mean_accuracies = {}
+    for label in testing_classes:
+        j = testing_classes[label]
+        for (i, _),_ in np.ndenumerate(acc_matrix):
+            if i == j:
+                correct = i
+                total = acc_matrix.sum(0)[j]
+                acc = correct / total
+                mean_accuracies[label] = acc
+
     SANKETNET.Plot.curves(
         range(hypes['EPOCHS']),
         *(training_accuracies, testing_accuracies),
@@ -465,6 +479,7 @@ def problem2b():
         title=f"Accuracy for Test and Training Data ({FILE})"
     )
     save_bin(f'{FILE}', network)
+    save_bin(f'{FILE}_accuracies', mean_accuracies)
     return network
 
 
