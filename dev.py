@@ -592,7 +592,7 @@ def filter_visual(Model):
     tiles = tiles_imgc.cpu().detach().numpy()
 
     plt.figure(figsize = (20,200))
-    plt.imshow(tiles, interpolation='nearest')
+    plt.imshow(tiles, interpolation='bilinear')
     plt.show()
     plt.savefig(f'./plots/filt_{FILE}{int(time.time())}.png')
 
