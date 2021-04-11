@@ -594,7 +594,7 @@ def filter_visual(Model):
     plt.imshow(tiles, interpolation='bilinear')
     plt.show()
     assert(type(stamp)== int), stamp
-    # plt.savefig(f'./plots/filt_{FILE}{stamp}.png')
+    plt.savefig(f'./plots/filt_{FILE}{stamp}.png')
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
