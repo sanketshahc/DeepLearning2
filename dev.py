@@ -20,11 +20,10 @@ from torch.utils.data import DataLoader
 from argparse import ArgumentParser, Action
 import box
 import time
-
-Lambda = transforms.Lambda
-
 from torch.utils.tensorboard import SummaryWriter
 
+Lambda = transforms.Lambda
+stamp = int(time.time())
 # ===== Problem 1.1 ========
 
 # choose pretrained model of choice
@@ -348,10 +347,10 @@ def save_bin(name, f_object):
     if not os.path.exists('pickled_binaries/'):
         os.makedirs('pickled_binaries/')
     if type(f_object) == torch.Tensor:
-        name = f'{name}_{int(time.time())}.pt'
+        name = f'{name}_{stamp}.pt'
         torch.save(f_object, f"pickled_binaries/{name}")
     else:
-        name = f'{name}_{int(time.time())}.bin'
+        name = f'{name}_{stamp}.bin'
         file = open(f"pickled_binaries/{name}", "wb")
         pickle.dump(f_object, file)
         file.close()
@@ -594,7 +593,7 @@ def filter_visual(Model):
     plt.figure(figsize = (20,200))
     plt.imshow(tiles, interpolation='bilinear')
     plt.show()
-    plt.savefig(f'./plots/filt_{FILE}{int(time.time())}.png')
+    plt.savefig(f'./plots/filt_{FILE}{stamp}.png')
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
