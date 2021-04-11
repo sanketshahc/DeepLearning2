@@ -72,6 +72,9 @@ from torch.utils.tensorboard import SummaryWriter
 # box. for params input ToTeensor() or Lambda(lambda y:
 
 # opens class dictionary as object, just for returning what values forward call returns
+
+
+
 pepper_path = './resources/peppers.jpg'
 classes = None
 with open('./resources/imagenet_class_index.json', 'r') as j:
@@ -547,6 +550,52 @@ def problem2b():
 # filters for the first convolutional layer. Describe your model’s architecture and your design
 # choices. What is your final accuracy? Note: Your model should perform better than the one in
 # Part 1 and Part 2. Solution:
+def tile_and_print(input, tiles_height, tiles_width, padding = 1):
+  """
+  expecting a 4d weight tensor. (chan_out, chan_in, h, w). permute for matplot plot.
+  This function uses permute to compose the filter map....
+  """
+  device = input.device
+  p = padding
+  w = input
+  co, ci, he, wi = w.shape
+  if padding:
+    w = torch.cat((w,torch.ones((co,ci,p, wi), device=device)),dim=-2)
+    w = torch.cat((w,torch.ones((co,ci,he+p, p), device=device)),dim=-1)
+    co, ci, he, wi = w.shape
+  w = w.permute(1,2,3,0)
+  w = w.reshape(ci,he,wi,tiles_height, tiles_width)
+  w = w.permute(0,3,1,4,2)
+  w = w.reshape(ci,he*tiles_height,tiles_width*wi)
+  return w
+
+def filter_visual(Model):
+    W = Model.conv1.weight
+    # for some reason have to get max values here....it gets completely screwd otherwise
+    R_max = W[:,0,:,:].max() - W[:,0,:,:].min()
+    G_max = W[:,1,:,:].max() - W[:,1,:,:].min()
+    B_max = W[:,2,:,:].max() - W[:,2,:,:].min()
+    tiles_imgc = tile_and_print(W,4,16, padding = 1)
+    # tiles_imgc = tiles_imgc
+    R, G, B = tiles_imgc[0,:,:], tiles_imgc[1,:,:], tiles_imgc[2,:,:]
+    R = (R - R.min()) / R_max
+    # R = R / R_max 
+    G = (G - G.min()) / G_max
+    # G = G / G_max
+    B = (B - B.min()) / B_max
+    # B = B / B_max
+
+    tiles_imgc[0,:,:] = R
+    tiles_imgc[1,:,:] = G
+    tiles_imgc[2,:,:] = B 
+    tiles_imgc = tiles_imgc.permute(1,2,0)
+    tiles = tiles_imgc.cpu().detach().numpy()
+
+    plt.figure(figsize = (20,200))
+    plt.imshow(tiles, interpolation='nearest')
+    plt.show()
+    plt.savefig(f'./plots/filt_{FILE}{int(time.time)}.png')
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -728,10 +777,225 @@ def problem3_1():
         metrics = (loss_training,loss_testing,accuracies,accuracies_test)
     save_bin(f'{FILE}', network)
     save_bin(f'{FILE}_metrics', metrics)
+    filter_visual(network)
     return network,metrics
-## todo save dict
-## visualizing features (tile, view, easy method)
 
+
+# batch norm is z-score norm per mini batch,possibly using whole pop stats, not sure, but def in testing use whole pop stats...
+# though i thought it just turns off during testing.......no BIAS in conv layer, bc BN layer adds bias...
+# 
+
+class TorchNet_bn(nn.Module):  
+    def __init__(self, batchnorm = False):
+        super(TorchNet_bn, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, (11, 11), padding=(5,),bias=False)
+        self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.avg_pool = nn.AvgPool2d(kernel_size=8, stride=8)
+        self.conv2 = nn.Conv2d(64, 128, (11, 11), padding=(5,),bias=False)
+        self.conv3 = nn.Conv2d(128, 128, (3, 3), padding=(1,),bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(128)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.lin1 = nn.Linear(25088, 10)
+        # self.lin2 = nn.Linear(392, 10)
+        
+        
+    # q are we to average pool to 1 pixel?
+    def forward(self, x):
+        x = self.conv1(x)
+        # print('conv1 complete')
+        assert x.shape == (hypes["BATCH"], 64, 224, 224), x.shape
+        x = self.bn1(x)
+        x = Mish()(x)
+        x = self.max_pool(x)
+        assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
+        # print('Maxpool complete')
+        x = self.conv2(x)
+        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
+        # print('conv2 complete')
+        x = self.bn2(x)
+        x = Mish()(x)
+        x = self.conv3(x)
+        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
+        # print('conv3 complete')
+        x = self.bn3(x)
+        x = Mish()(x)
+        x = self.avg_pool(x)
+        assert x.shape == (hypes["BATCH"], 128, 14, 14), x.shape
+        # print('avgpool complete')
+        x = x.view(hypes["BATCH"], 25088)
+        y = self.lin1(x)
+        # print('lin1 complete')
+        # x = nn.ReLU()(x)
+        # x = self.lin2(x)
+        # print('lin2 complete')
+        
+        return y
+
+    def problem3_2():
+    print(hypes)
+    cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
+    cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
+    network = TorchNet_bn()
+    network.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
+    count_epoch = 0
+    accuracies = []
+    accuracies_test = []
+    loss_testing = []
+    loss_training = []
+    # for epoch in range(2):  # loop over the dataset multiple times
+    for epoch in range(hypes["EPOCHS"]):
+        count_epoch+=1
+        print('EPOCH:', count_epoch)
+        network.train()
+        training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
+        loss_training.append(training_batches[0])
+        network.eval()
+        testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
+        loss_testing.append(testing_batches[0])
+        accuracy = training_batches[1]
+        accuracies.append(accuracy)
+        accuracy_test = testing_batches[1]
+        accuracies_test.append(accuracy_test)
+        print('training_loss', training_batches[0], 'accuracy', accuracy)
+        print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
+        metrics = (loss_training,loss_testing,accuracies,accuracies_test)
+    save_bin(f'{FILE}', network)
+    save_bin(f'{FILE}_metrics', metrics)
+    filter_visual(network)
+    return network,metrics
+
+
+class SuperNet(nn.Module):  
+    def __init__(self, batchnorm = False):
+        super(SuperNet, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, 16, (7, 7), padding=(3,),bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.conv2 = nn.Conv2d(16, 32, (5, 5), padding=(2,),bias=False)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.avg_pool1 = nn.AvgPool2d(kernel_size=2, stride=2)
+
+        self.conv3 = nn.Conv2d(32, 64, (5, 5), padding=(2,),bias=False)
+        self.bn3 = nn.BatchNorm2d(64)
+        # RELU
+
+        self.conv4 = nn.Conv2d(64,128,(3,3), padding=1,bias=False)
+        self.bn4 = nn.BatchNorm2d(128)
+        
+        self.avg_pool2 = nn.AvgPool2d(kernel_size=4, stride=4)
+
+        self.conv5 = nn.Conv2d(128,256,(3,3), padding=1,bias=False)
+        self.bn5= nn.BatchNorm2d(256)
+
+        self.conv6 = nn.Conv2d(256,256,(1,1), padding=0,bias=False)
+        self.bn6 = nn.BatchNorm2d(256)
+
+        self.max_pool = nn.MaxPool2d(kernel_size=7, stride=7)
+
+        self.conv7 = nn.Conv2d(256,64,(1,1), padding=0,bias=False)
+        self.bn7 = nn.BatchNorm2d(64)
+
+        self.lin1 = nn.Linear(64*14*14, 64)
+        self.lin2 = nn.Linear(64, 10)
+
+        
+        
+    # q are we to average pool to 1 pixel?
+    def forward(self, x):
+        x = self.conv1(x)
+        # print('conv1 complete')
+        assert x.shape == (hypes["BATCH"], 16, 224, 224), x.shape
+        x = self.bn1(x)
+        x = nn.ReLU()(x)
+
+        x = self.conv2(x)
+        assert x.shape == (hypes["BATCH"], 32, 224, 224), x.shape
+        # print('conv2 complete')
+        x = self.bn2(x)
+        x = nn.ReLU()(x)
+
+        x = self.avg_pool(x)
+
+        x = self.conv3(x)
+        assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
+        # print('conv2 complete')
+        x = self.bn3(x)
+        x = nn.ReLU()(x)
+
+        x = self.conv4(x)
+        assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
+        # print('conv2 complete')
+        x = self.bn4(x)
+        x = nn.ReLU()(x)
+
+        x = self.avg_pool(x)
+
+        x = self.conv5(x)
+        assert x.shape == (hypes["BATCH"], 256, 28, 28), x.shape
+        # print('conv2 complete')
+        x = self.bn5(x)
+        x = nn.ReLU()(x)
+
+        x = self.conv6(x)
+        assert x.shape == (hypes["BATCH"], 128, 28, 28), x.shape
+        # print('conv2 complete')
+        x = self.bn6(x)
+        x = nn.ReLU()(x)
+
+        x = self.max_pool(x)
+
+        x = self.conv7(x)
+        assert x.shape == (hypes["BATCH"], 64, 14, 14), x.shape
+        # print('conv2 complete')
+        x = self.bn7(x)
+        x = nn.ReLU()(x)
+        
+        x = x.view(hypes["BATCH"], 64*14*14)
+        x = self.lin1(x)
+        x = nn.ReLU()(x)
+
+        y = self.lin2(x)
+        
+        return y
+
+    def problem3_2():
+    print(hypes)
+    cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
+    cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
+    network = SuperNet()
+    network.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
+    count_epoch = 0
+    accuracies = []
+    accuracies_test = []
+    loss_testing = []
+    loss_training = []
+    # for epoch in range(2):  # loop over the dataset multiple times
+    for epoch in range(hypes["EPOCHS"]):
+        count_epoch+=1
+        print('EPOCH:', count_epoch)
+        network.train()
+        training_batches = batches_loop(cifar_Loader, network,criterion,optimizer)
+        loss_training.append(training_batches[0])
+        network.eval()
+        testing_batches = batches_loop(cifar_test_Loader,network, criterion,optimizer, True)
+        loss_testing.append(testing_batches[0])
+        accuracy = training_batches[1]
+        accuracies.append(accuracy)
+        accuracy_test = testing_batches[1]
+        accuracies_test.append(accuracy_test)
+        print('training_loss', training_batches[0], 'accuracy', accuracy)
+        print('testing_loss', testing_batches[0], 'accuracy_test', accuracy_test)
+        metrics = (loss_training,loss_testing,accuracies,accuracies_test)
+    save_bin(f'{FILE}', network)
+    save_bin(f'{FILE}_metrics', metrics)
+    filter_visual(network)
+    return network, metrics
+    
 ## Eventually
 # batch Norm layers
 # gpu condition checking...
@@ -770,3 +1034,4 @@ if __name__ == "__main__":
     parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
     args = parser.parse_args()
     command(FUNCTION_MAP[args.RUN])
+
