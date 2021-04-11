@@ -893,7 +893,7 @@ class SuperNet(nn.Module):
         self.conv6 = nn.Conv2d(256,256,(1,1), padding=0,bias=False)
         self.bn6 = nn.BatchNorm2d(256)
 
-        self.max_pool = nn.MaxPool2d(kernel_size=7, stride=7)
+        self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv7 = nn.Conv2d(256,64,(1,1), padding=0,bias=False)
         self.bn7 = nn.BatchNorm2d(64)
