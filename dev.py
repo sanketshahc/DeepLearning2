@@ -961,7 +961,7 @@ class SuperNet(nn.Module):
         
         return y
 
-    def problem3_2():
+    def problem3_3():
     print(hypes)
     cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
@@ -1030,7 +1030,11 @@ if __name__ == "__main__":
     # otherwise would run every time imported.
 
     FUNCTION_MAP = {'problem3_1' : problem3_1,
-                    'problem2b' : problem2b}
+                    'problem2b' : problem2b,
+                    'problem3_2' : problem3_2,
+                    'problem3_3' : problem3_3
+
+                    }
     parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
     args = parser.parse_args()
     command(FUNCTION_MAP[args.RUN])
