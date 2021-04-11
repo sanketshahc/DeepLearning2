@@ -832,7 +832,7 @@ class TorchNet_bn(nn.Module):
         
         return y
 
-    def problem3_2():
+def problem3_2():
     print(hypes)
     cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
