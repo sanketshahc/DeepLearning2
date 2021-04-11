@@ -355,7 +355,7 @@ def save_bin(name, f_object):
         file = open(f"pickled_binaries/{name}", "wb")
         pickle.dump(f_object, file)
         file.close()
-    box.upload(f'{name}')
+    # box.upload(f'{name}')
 
 
 ## PETnet data
@@ -594,7 +594,7 @@ def filter_visual(Model):
     plt.figure(figsize = (20,200))
     plt.imshow(tiles, interpolation='nearest')
     plt.show()
-    plt.savefig(f'./plots/filt_{FILE}{int(time.time)}.png')
+    plt.savefig(f'./plots/filt_{FILE}{int(time.time())}.png')
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -909,13 +909,13 @@ class SuperNet(nn.Module):
         # print('conv1 complete')
         assert x.shape == (hypes["BATCH"], 16, 224, 224), x.shape
         x = self.bn1(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         x = self.conv2(x)
         assert x.shape == (hypes["BATCH"], 32, 224, 224), x.shape
         # print('conv2 complete')
         x = self.bn2(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         x = self.avg_pool1(x)
 
@@ -923,13 +923,13 @@ class SuperNet(nn.Module):
         assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
         # print('conv2 complete')
         x = self.bn3(x)
-        x = nn.ReLU()(x)
+        x = Mish)(x)
 
         x = self.conv4(x)
         assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
         # print('conv2 complete')
         x = self.bn4(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         x = self.avg_pool2(x)
 
@@ -937,13 +937,13 @@ class SuperNet(nn.Module):
         assert x.shape == (hypes["BATCH"], 256, 28, 28), x.shape
         # print('conv2 complete')
         x = self.bn5(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         x = self.conv6(x)
         assert x.shape == (hypes["BATCH"], 256, 28, 28), x.shape
         # print('conv2 complete')
         x = self.bn6(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         x = self.max_pool(x)
 
@@ -951,11 +951,11 @@ class SuperNet(nn.Module):
         assert x.shape == (hypes["BATCH"], 64, 14, 14), x.shape
         # print('conv2 complete')
         x = self.bn7(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
         
         x = x.view(hypes["BATCH"], 64*14*14)
         x = self.lin1(x)
-        x = nn.ReLU()(x)
+        x = Mish()(x)
 
         y = self.lin2(x)
         
