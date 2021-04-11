@@ -78,6 +78,6 @@ def upload(filename):
         print(access_token)
         print(refresh_token)
 
-upload('file3.txt')
+# upload('file3.txt')
 
-upload('stuff1.bin')
+# upload('stuff1.bin')
