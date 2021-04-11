@@ -940,7 +940,7 @@ class SuperNet(nn.Module):
         x = nn.ReLU()(x)
 
         x = self.conv6(x)
-        assert x.shape == (hypes["BATCH"], 128, 28, 28), x.shape
+        assert x.shape == (hypes["BATCH"], 256, 28, 28), x.shape
         # print('conv2 complete')
         x = self.bn6(x)
         x = nn.ReLU()(x)
