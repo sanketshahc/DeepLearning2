@@ -961,7 +961,7 @@ class SuperNet(nn.Module):
         
         return y
 
-    def problem3_3():
+def problem3_3():
     print(hypes)
     cifar_Loader = DataLoader(cifar, drop_last=True, batch_size=hypes['BATCH'])
     cifar_test_Loader = DataLoader(cifar_test,drop_last=True, batch_size=hypes['BATCH'])
