@@ -917,7 +917,7 @@ class SuperNet(nn.Module):
         x = self.bn2(x)
         x = nn.ReLU()(x)
 
-        x = self.avg_pool(x)
+        x = self.avg_pool1(x)
 
         x = self.conv3(x)
         assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
@@ -931,7 +931,7 @@ class SuperNet(nn.Module):
         x = self.bn4(x)
         x = nn.ReLU()(x)
 
-        x = self.avg_pool(x)
+        x = self.avg_pool2(x)
 
         x = self.conv5(x)
         assert x.shape == (hypes["BATCH"], 256, 28, 28), x.shape
