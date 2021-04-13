@@ -1,0 +1,43 @@
+Problem 4 - Fooling Convolutional Neural Networks
+In this problem you will fool the pre-trained convolutional neural network of your choice. 
+One of the simplest ways to do this is to add a small amount of adversarial noise to the input image, 
+which causes the correct predicted label ytrue to switch to an incorrect adversarial label yfool, 
+despite the image looking the same to our human visual system.
+Part 1 (20 points)
+More formally, given an input image X, an ImageNet pre-trained network will give us
+P (y|X), which is a probability distribution over labels and the predicted label can be com-
+puted using the argmax function. We assume the network has been trained to correctly
+classify X. To create an adversarial input, we want to find Xˆ such that Xˆ will be mis-
+classified as yfool. To ensure that Xˆ does not look radically different from X we impose a 􏰂ˆ􏰂
+constraint on the distance between the original and modified images, i.e., 􏰂􏰂X − X􏰂􏰂 􏰇 ε, ∞
+where ε is a small positive number. This model can be trained using backpropagation to find 
+the adversarial example, i.e.,
+􏰃′λ′􏰄 Xˆ =argmin Loss􏰀X,yfool􏰁+ 􏰂􏰂X −X􏰂􏰂 ,
+X′ 2∞
+where λ > 0 is a hyperparameter and ∥·∥∞ denotes the infinity norm for tensors.
+To do this optimization, you can begin by initializing X′ ← X. Then, repeat the following 5
+two steps until you are satisfied with the results (or convergence): 
+X′←X′+λ ∂ P􏰀yfool|X′􏰁
+∂X′
+X′ ←clip􏰀X′,X−ε,X+ε􏰁
+where the clip function ‘clips’ the values so that each pixel is within ε of the original image. 
+You may use the neural network toolbox of your choice to do this optimization, but we will only provide help for PyTorch. 
+You can read more about this approach here: https: //arxiv.org/pdf/1707.07397.pdf. Note that the details are slightly different.
+Demonstrate your method on four images. The first image should be ‘peppers,’ which was used in an earlier assignment. 
+Show that you can make the network classify it as a space shuttle (ImageNet class id 812). You can choose the other three photos, 
+but ensure that they contain an ImageNet object and make the network classify it as a different class. Ensure that the pre-trained 
+CNN that you use outputs the correct class as the most likely assignment and give its probability. Then, show the ‘noise image’ 
+that will be added to the original image. Then, show the noise+original image along with the new most likely class and the new l
+argest probability. The noise+original image should be perceptually indistinguishable from the original image (to your human visual 
+system). You may use the ImageNet pre-trained CNN of your choice (e.g., VGG-16, ResNet-50, etc.), but mention the pre-trained model 
+that you used. You can show your results as a 4 × 3 array of figures, with each row containing original image (titled with most 
+likely class and probability), the adversarial noise, and then the new image (titled with most likely class and probability).
+Solution:
+Part 2 (10 points)
+The method we deployed to make adversarial examples is not robust to all kinds of trans- formations. 
+To examine the robustness of this, take the four adversarial images you created in part 1 and show how the
+following image manipulations affect the predicted class prob- abilities: mirror reflections (flip the image),
+a crop that contains about 80% of the original object, a 30 degree rotation, and converting the image to grayscale 
+and then replicating the three gray channels to make a faux RGB image. Show the modified adversarial images 
+and title them with the new most likely class and probabilities. Discuss the results and why you think it did 
+or did not work in each case.

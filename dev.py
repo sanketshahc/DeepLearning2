@@ -81,7 +81,7 @@ with open('./resources/imagenet_class_index.json', 'r') as j:
 classes = {int(i): j for i, j in classes.items()}
 
 
-def transform_peppers(img_path):
+def transform_datum(img_path):
     """
     """
     # does not close pil obj
@@ -102,8 +102,9 @@ def transform_peppers(img_path):
 # Implementing Custom size 1 Dataset Object from Dataset primitive. Dataloader will wrap this
 # class and generate batches.
 class Datum(Dataset):
-    def __init__(self, img_path, transform=None, target_transform=None):
+    def __init__(self, img_path, label, transform=None, target_transform=None):
         self.img_labels = None
+        self.label = label
         self.img = img_path  # here will just be a direct path to peppers.
         self.transform = transform
         self.target_transform = target_transform
@@ -116,7 +117,7 @@ class Datum(Dataset):
     # tensor image and corresponding label in a Python dict.
     def __getitem__(self, idx):
         # no index needed, works as gnerator
-        label = ['peppers.jpg', 0]  # where 0 is the index key in the label dict
+        label = [self.label, 0]  # where 0 is the index key in the label dict
         if self.transform:
             # img is a c x h x w with 0-255 vals
             img = self.transform(self.img)  # ToTensor fn param
@@ -130,7 +131,7 @@ class Datum(Dataset):
 
 pepper_net = models.resnet18(pretrained=True,
                              progress=True)  # weights should be loaded to a 'cache'
-peppers_datum = Datum(pepper_path, transform_peppers)
+peppers_datum = Datum(pepper_path, 'peppers',transform_datum)
 pepper_batch = DataLoader(peppers_datum, batch_size=1)
 
 
@@ -323,7 +324,7 @@ FILE = "binary"
 BOX_AUTH = "auth_code_here"
 
 hypes = {
-    "EPOCHS": 5,
+    "EPOCHS": 150,
     "BATCH": 1,  # 32, 16, 64
     "RATE": .01,  # .1 .05 .01 .05, .02 .025
     "MOMENTUM": .2,
@@ -923,7 +924,7 @@ class SuperNet(nn.Module):
         assert x.shape == (hypes["BATCH"], 64, 112, 112), x.shape
         # print('conv2 complete')
         x = self.bn3(x)
-        x = Mish)(x)
+        x = Mish()(x)
 
         x = self.conv4(x)
         assert x.shape == (hypes["BATCH"], 128, 112, 112), x.shape
@@ -1002,6 +1003,227 @@ def problem3_3():
 # optimizer / parameter search...
 # cli customizing (will need if using colab)
 
+# Problem 4 - Fooling Convolutional Neural Networks
+# In this problem you will fool the pre-trained convolutional neural network of your choice. 
+# One of the simplest ways to do this is to add a small amount of adversarial noise to the input image, 
+# which causes the correct predicted label ytrue to switch to an incorrect adversarial label yfool, 
+# despite the image looking the same to our human visual system.
+# Part 1 (20 points)
+# More formally, given an input image X, an ImageNet pre-trained network will give us
+# P (y|X), which is a probability distribution over labels and the predicted label can be com-
+# puted using the argmax function. We assume the network has been trained to correctly
+# classify X. To create an adversarial input, we want to find Xˆ such that Xˆ will be mis-
+# classified as yfool. To ensure that Xˆ does not look radically different from X we impose a 􏰂ˆ􏰂
+# constraint on the distance between the original and modified images, i.e., 􏰂􏰂X − X􏰂􏰂 􏰇 ε, ∞
+# where ε is a small positive number. This model can be trained using backpropagation to find 
+# the adversarial example, i.e.,
+# 􏰃′λ′􏰄 Xˆ =argmin Loss􏰀X,yfool􏰁+ 􏰂􏰂X −X􏰂􏰂 ,
+# X′ 2∞
+# where λ > 0 is a hyperparameter and ∥·∥∞ denotes the infinity norm for tensors.
+# To do this optimization, you can begin by initializing X′ ← X. Then, repeat the following 5
+# two steps until you are satisfied with the results (or convergence): 
+# X′←X′+λ ∂ P􏰀yfool|X′􏰁
+# ∂X′
+# X′ ←clip􏰀X′,X−ε,X+ε􏰁
+# where the clip function ‘clips’ the values so that each pixel is within ε of the original image. 
+# You may use the neural network toolbox of your choice to do this optimization, but we will only provide help for PyTorch. 
+# You can read more about this approach here: https: //arxiv.org/pdf/1707.07397.pdf. Note that the details are slightly different.
+# Demonstrate your method on four images. The first image should be ‘peppers,’ which was used in an earlier assignment. 
+# Show that you can make the network classify it as a space shuttle (ImageNet class id 812). You can choose the other three photos, 
+# but ensure that they contain an ImageNet object and make the network classify it as a different class. Ensure that the pre-trained 
+# CNN that you use outputs the correct class as the most likely assignment and give its probability. Then, show the ‘noise image’ 
+# that will be added to the original image. Then, show the noise+original image along with the new most likely class and the new l
+# argest probability. The noise+original image should be perceptually indistinguishable from the original image (to your human visual 
+# system). You may use the ImageNet pre-trained CNN of your choice (e.g., VGG-16, ResNet-50, etc.), but mention the pre-trained model 
+# that you used. You can show your results as a 4 × 3 array of figures, with each row containing original image (titled with most 
+# likely class and probability), the adversarial noise, and then the new image (titled with most likely class and probability).
+# Solution:
+# Part 2 (10 points)
+# The method we deployed to make adversarial examples is not robust to all kinds of trans- formations. 
+# To examine the robustness of this, take the four adversarial images you created in part 1 and show how the
+# following image manipulations affect the predicted class prob- abilities: mirror reflections (flip the image),
+# a crop that contains about 80% of the original object, a 30 degree rotation, and converting the image to grayscale 
+# and then replicating the three gray channels to make a faux RGB image. Show the modified adversarial images 
+# and title them with the new most likely class and probabilities. Discuss the results and why you think it did 
+# or did not work in each case.
+
+# Essentially, we formulate a new loss equation, that is initialized with imagenet weights, but the input data we give it 
+# undergoes a transformation. This will require us to find the transformation f(x) = x` such that x` when input into the model, 
+# outputs a predetermined (alternative label of our choosing). So the model trains on incorrect data that looks the same, esesntially...this
+# can be thought of as a white box targeted attack.
+
+# Part 1
+# My idea here is:
+# similar to the transfer learning problem:
+# 0. The data...Pull 1 or more images of any object in the imagenet dataset, and then make model predict space shuttle.
+# 1. pull a resnet 18 model,
+# 2. Freeze the gradients
+# 3. Compose it with a new linear layer...and change criteria...
+# 4. code up a training snippet, with this model, i guess once per image
+# 5. save original, new weights , new image (imperceptibly differnt), and prediction. for both in the original resnet.
+# 6. plot results
+
+# Part 2
+# 1. Do Required transformation.
+# 2. DIscuss resutls
+
+# Compile / Prepare Data...separate datum sets for each image...#
+# def __init__(self, img_path, label, transform=None, target_transform=None):
+def transform_datum2(img):
+    img = transforms.Resize((224, 224))(img)  # must curry arg
+    img = transforms.ToTensor()(img)  # 0 to 1 tensor
+    # img = transforms.Normalize(mean=m, std=s)(img)
+    return img
+#eft
+eft_path = "resources/eft.jpg"
+eft_datum = Datum(eft_path, "eft", transform = transform_datum2)
+
+#tiger_shark
+
+
+#water_ouzel
+
+
+
+class Adversary(nn.Module):
+    def __init__(self):
+        super(Adversary, self).__init__()
+        self.adversary = nn.Conv2d(3,3,1, 1)
+        self.adversary.bias = None
+
+    def forward(self, x):
+        print('Adverary Called Forward')
+        def clip(x_prime, x):
+            eps = .125
+            high = x + eps
+            print('clip called', x_prime.shape)
+            low = x - eps
+            x_prime = torch.min(x_prime,high)
+            x_prime = torch.max(x_prime,low)
+            return x_prime
+        # x = x.view(672,224)
+        x_prime = self.adversary(x)
+        x_prime = clip(x_prime,x)
+        return x_prime
+
+
+
+class AdversarialNet(nn.Module):
+    def __init__(self, fool, adversary):
+        super(AdversarialNet, self).__init__()
+        self.adversary = adversary
+        self.fool = fool
+
+    def forward(self, x):
+        print('insideNet', x.shape)
+        x = self.adversary(x)
+        print('callingfool')        
+        x = self.fool(x)
+        return x
+
+    
+
+class AdvLoss(nn.CrossEntropyLoss):
+    def __init__(self):
+        super(AdvLoss, self).__init__()
+
+    def forward(self,X_prime, X):
+        reg = (1/2)* torch.max((X_prime - X).sum(-1))
+        # reg = reg.long()
+        print('reg',reg.dtype)
+        print('AdvLoss Called')
+        def wrapped_CrossEntropy(y_hat,y_fool):
+            y_fool = y_fool.long()
+            loss = nn.CrossEntropyLoss()
+            # print(type(loss), loss.dtype)
+            print(y_fool.dtype, y_hat.dtype)
+            loss = float(loss(y_hat,y_fool))
+            print(loss)
+            return loss + reg
+
+        return wrapped_CrossEntropy
+
+
+# training the whole model will train the weights of AdversaryNet, which essentially trains X_prime.
+# so our update is really of the weights, not x_prime, which is the confusion.
+# then we grab the final weights, first one in the parameter stack... multiply it with x to get x_prime, and then subtract X to get noise.
+
+
+
+def problem4_1(datum):
+    data_loader = DataLoader(datum, batch_size=1)
+    adversary = Adversary()
+    foolnet = models.resnet18(pretrained=True, progress=True) 
+    for _, param in foolnet.named_parameters():
+        param.requires_grad = False
+        # print(_, param.requires_grad)
+    # print(adversary)
+    network = AdversarialNet(foolnet, adversary)
+    print(network)
+    network.to(device)
+    criterion = AdvLoss()
+    optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
+    noise = None
+    x_prime = None
+    for epoch in range(hypes["EPOCHS"]):
+        for x in data_loader: # Just the one.
+            _ = x['label']
+            x = x['image']
+            print('xshape',x.shape)
+            x = x.to(device)
+            y_fool = torch.Tensor([812])
+            # print('y_foolshape',y_fool)
+            y_fool = y_fool.to(device)
+            params = []
+            for _, p in network.named_parameters():
+                # print(p)
+                params.append(p)
+            print('paramshape',params[0].shape)
+            x_prime = F.conv2d(x,params[0])# weights must be pulled out temporarily...
+        #     # assert x.shape[0] == hypes["BATCH"], x.shape
+            optimizer.zero_grad()
+            # print('xprecall',x.shape)
+            y_hat = network(x)
+            loss = criterion(x_prime, x)(y_hat,y_fool)
+            loss.backward()
+            optimizer.step()
+            noise = x_prime - x 
+            print('noise', noise)
+    return x_prime, network
+    
+## visualize (from tutorial)
+def visualize_adv(*input_imgs):
+    inv_normalize = transforms.Normalize(
+        mean=[-0.485/0.229, -0.456/0.224, -0.406/0.255],
+        std=[1/0.229, 1/0.224, 1/0.255]
+    )
+    for k ,i in enumerate(input_imgs):
+        W = i[0]
+        # print(i[0].shape)
+        # W = i[0].detach().numpy()
+        R_max = W[0,:,:].max() - W[0,:,:].min()
+        G_max = W[1,:,:].max() - W[1,:,:].min()
+        B_max = W[2,:,:].max() - W[2,:,:].min()
+        R, G, B = W[0,:,:], W[1,:,:], W[2,:,:]
+        R = (R - R.min()) / R_max
+        # R = R / R_max 
+        G = (G - G.min()) / G_max
+        # G = G / G_max
+        B = (B - B.min()) / B_max
+
+        W[0,:,:] = R
+        W[1,:,:] = G
+        W[2,:,:] = B
+
+        # img_prime = inv_normalize(W).detach().numpy()
+        print(i)
+        img_prime = np.transpose(img_prime, (1, 2, 0))
+        print(img_prime.shape)
+        plt.imshow(img_prime)
+        plt.show()
+        plt.imsave(f'new{k}.png', img_prime)
+
+
 ##########
 ### CLI code
 ########
@@ -1037,5 +1259,6 @@ if __name__ == "__main__":
                     }
     parser.add_argument('--RUN', choices=FUNCTION_MAP.keys())
     args = parser.parse_args()
-    command(FUNCTION_MAP[args.RUN])
+    # command(FUNCTION_MAP[args.RUN])
+
 
