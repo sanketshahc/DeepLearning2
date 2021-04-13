@@ -8,6 +8,8 @@ import torchvision.transforms.transforms as transforms
 import pickle
 import torchvision.models as models
 import torchvision.datasets as datasets
+from torch.autograd.gradcheck import zero_gradients
+from torch.autograd import Variable
 import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
@@ -324,7 +326,7 @@ FILE = "binary"
 BOX_AUTH = "auth_code_here"
 
 hypes = {
-    "EPOCHS": 150,
+    "EPOCHS": 300,
     "BATCH": 1,  # 32, 16, 64
     "RATE": .01,  # .1 .05 .01 .05, .02 .025
     "MOMENTUM": .2,
@@ -1069,159 +1071,200 @@ def problem3_3():
 
 # Compile / Prepare Data...separate datum sets for each image...#
 # def __init__(self, img_path, label, transform=None, target_transform=None):
-def transform_datum2(img):
+
+eps = .125 #hyper
+cycles = 10 #hyper
+rc = .025 #hyper
+
+eft_path = "resources/eft.jpg"
+shark_path = "resources/tiger_shark.jpg"
+ouzel_path = "resources/water_ouzel.jpg"
+
+paths = [pepper_path, eft_path, shark_path, ouzel_path]
+
+########################## Correct Way
+
+
+def transform_datum3(img):
+    img = open(img, 'rb')
+    img = pil.open(img)
     img = transforms.Resize((224, 224))(img)  # must curry arg
     img = transforms.ToTensor()(img)  # 0 to 1 tensor
-    # img = transforms.Normalize(mean=m, std=s)(img)
+    img = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(img)
     return img
-#eft
-eft_path = "resources/eft.jpg"
-eft_datum = Datum(eft_path, "eft", transform = transform_datum2)
 
-#tiger_shark
-
-
-#water_ouzel
-
-
-
-class Adversary(nn.Module):
-    def __init__(self):
-        super(Adversary, self).__init__()
-        self.adversary = nn.Conv2d(3,3,1, 1)
-        self.adversary.bias = None
-
-    def forward(self, x):
-        print('Adverary Called Forward')
-        def clip(x_prime, x):
-            eps = .125
-            high = x + eps
-            print('clip called', x_prime.shape)
-            low = x - eps
-            x_prime = torch.min(x_prime,high)
-            x_prime = torch.max(x_prime,low)
-            return x_prime
-        # x = x.view(672,224)
-        x_prime = self.adversary(x)
-        x_prime = clip(x_prime,x)
-        return x_prime
-
-
-
-class AdversarialNet(nn.Module):
-    def __init__(self, fool, adversary):
-        super(AdversarialNet, self).__init__()
-        self.adversary = adversary
-        self.fool = fool
-
-    def forward(self, x):
-        print('insideNet', x.shape)
-        x = self.adversary(x)
-        print('callingfool')        
-        x = self.fool(x)
-        return x
-
-    
-
-class AdvLoss(nn.CrossEntropyLoss):
-    def __init__(self):
-        super(AdvLoss, self).__init__()
-
-    def forward(self,X_prime, X):
-        reg = (1/2)* torch.max((X_prime - X).sum(-1))
-        # reg = reg.long()
-        print('reg',reg.dtype)
-        print('AdvLoss Called')
-        def wrapped_CrossEntropy(y_hat,y_fool):
-            y_fool = y_fool.long()
-            loss = nn.CrossEntropyLoss()
-            # print(type(loss), loss.dtype)
-            print(y_fool.dtype, y_hat.dtype)
-            loss = float(loss(y_hat,y_fool))
-            print(loss)
-            return loss + reg
-
-        return wrapped_CrossEntropy
-
-
-# training the whole model will train the weights of AdversaryNet, which essentially trains X_prime.
-# so our update is really of the weights, not x_prime, which is the confusion.
-# then we grab the final weights, first one in the parameter stack... multiply it with x to get x_prime, and then subtract X to get noise.
-
-
-
-def problem4_1(datum):
-    data_loader = DataLoader(datum, batch_size=1)
-    adversary = Adversary()
+def adversarial_training(impath):
     foolnet = models.resnet18(pretrained=True, progress=True) 
     for _, param in foolnet.named_parameters():
-        param.requires_grad = False
-        # print(_, param.requires_grad)
-    # print(adversary)
-    network = AdversarialNet(foolnet, adversary)
-    print(network)
-    network.to(device)
-    criterion = AdvLoss()
-    optimizer = optim.SGD(network.parameters(), lr=hypes["RATE"], momentum=hypes["MOMENTUM"])
-    noise = None
-    x_prime = None
-    for epoch in range(hypes["EPOCHS"]):
-        for x in data_loader: # Just the one.
-            _ = x['label']
-            x = x['image']
-            print('xshape',x.shape)
-            x = x.to(device)
-            y_fool = torch.Tensor([812])
-            # print('y_foolshape',y_fool)
-            y_fool = y_fool.to(device)
-            params = []
-            for _, p in network.named_parameters():
-                # print(p)
-                params.append(p)
-            print('paramshape',params[0].shape)
-            x_prime = F.conv2d(x,params[0])# weights must be pulled out temporarily...
-        #     # assert x.shape[0] == hypes["BATCH"], x.shape
-            optimizer.zero_grad()
-            # print('xprecall',x.shape)
-            y_hat = network(x)
-            loss = criterion(x_prime, x)(y_hat,y_fool)
-            loss.backward()
-            optimizer.step()
-            noise = x_prime - x 
-            print('noise', noise)
-    return x_prime, network
-    
-## visualize (from tutorial)
-def visualize_adv(*input_imgs):
+            param.requires_grad = False
+    foolnet.eval()
+    # are we not supposed to turn off gradients here?
+    img = transform_datum3(impath) # prepared image object
+    img = img.unsqueeze(0) # add batch dim, (what the dataloader does, essentially)
+    image_variable = Variable(img, requires_grad=True) # make a trainable parameter (wrap it up)
+    y_true = Variable(torch.LongTensor([27])) # actual label, wrapped in variable class
+    y_target = Variable(torch.LongTensor([812]), requires_grad=False) #target label (spoof label)
+    for i in range(cycles): #epochs
+        zero_gradients(image_variable) # zero the gradient with each training step...othertwise accumulates
+        out = foolnet(image_variable) # logit out
+        out = F.softmax(out, dim=-1) # softmax out
+        criterion = nn.CrossEntropyLoss() # loss predicted vs spoof target
+        loss = criterion(out,y_target)
+        loss.backward()
+        # update step (optimizer) for X_prime        
+        x_prime = image_variable.data - (rc * torch.sign(image_variable.grad.data))        
+        noise = x_prime - img #using this and not variable.....
+        noise = torch.clamp(noise, -eps, eps) # for some reason clipping noise vs x_prime, try using clip function so not 
+        x_prime = img + noise
+        image_variable.data = x_prime
+
+        # x_prime = clip(x_prime, image_variable)
+        # noise = x_prime - image_variable.data
+    max_idx = torch.argmax(out).item()
+    ind_label = (max_idx, classes[max_idx]) # predicted label
+    out = foolnet(img) # logit out
+    out = F.softmax(out, dim=-1) # softmax out
+    out_fool = foolnet(image_variable)
+    out_fool = F.softmax(out_fool, dim=1)
+    x_pred = torch.max(out.detach(), 1)
+    x_label = classes[x_pred[1][0].item()]
+    x_prob = round((x_pred[0][0].item()) * 100,1)
+    x_prime_pred = torch.max(out_fool.detach(), 1)
+    x_prime_label = classes[x_prime_pred[1][0].item()]
+    x_prime_prob =  round((x_prime_pred[0][0].item()) * 100,1)
+    return [img,image_variable], [x_prob, x_prime_prob], [x_label, x_prime_label]
+
+## visualize (from tutorial), onliy works with one for now...
+def reverse_transform(input_imgs):
+    # reverse reshape
+    W = input_imgs.squeeze(0) 
+
+    # reverse normalization
     inv_normalize = transforms.Normalize(
         mean=[-0.485/0.229, -0.456/0.224, -0.406/0.255],
         std=[1/0.229, 1/0.224, 1/0.255]
     )
-    for k ,i in enumerate(input_imgs):
-        W = i[0]
-        # print(i[0].shape)
-        # W = i[0].detach().numpy()
-        R_max = W[0,:,:].max() - W[0,:,:].min()
-        G_max = W[1,:,:].max() - W[1,:,:].min()
-        B_max = W[2,:,:].max() - W[2,:,:].min()
-        R, G, B = W[0,:,:], W[1,:,:], W[2,:,:]
-        R = (R - R.min()) / R_max
-        # R = R / R_max 
-        G = (G - G.min()) / G_max
-        # G = G / G_max
-        B = (B - B.min()) / B_max
+    #ensure scaling 0-1 (rescale may shift gamma)
+    W = inv_normalize(W).detach().numpy()
+    R, G, B = W[0,:,:], W[1,:,:], W[2,:,:]    
+    R = (R - R.min()) / (R.max() - R.min())
+    G = (G - G.min()) / (G.max() - G.min())
+    B = (B - B.min()) / (B.max() - B.min())
+    W[0,:,:], W[1,:,:], W[2,:,:] = R, G, B
 
-        W[0,:,:] = R
-        W[1,:,:] = G
-        W[2,:,:] = B
+    #reverse transpose
+    img = np.transpose(W, (1, 2, 0))
 
-        # img_prime = inv_normalize(W).detach().numpy()
-        print(i)
-        img_prime = np.transpose(img_prime, (1, 2, 0))
-        print(img_prime.shape)
-        plt.imshow(img_prime)
-        plt.show()
-        plt.imsave(f'new{k}.png', img_prime)
+    return img
+
+
+def plot_adversarial(img_pairs, img_probs, img_labels): # x, x_prime
+    assert type(img_pairs) == tuple
+    assert type(img_probs) == tuple
+    fig, ax = plt.subplots(4,3, figsize =(6,8), tight_layout=True)
+    ax[0][0].set_title("Original")
+    ax[0][1].set_title("Noise")
+    ax[0][2].set_title("Adversarial")
+    for each in ax:
+        for each in each:
+            each.set_yticklabels([])
+            each.set_xticklabels([])
+            each.set_xticks([])
+            each.set_yticks([])
+            each.spines[:].set_visible(False)
+
+            # each.axis('off')
+
+    for i, pair in enumerate(img_pairs):
+        x_prime = pair[0]
+        x_prime_prob = img_probs[i][0]
+        x_prime_label = img_labels[i][0]
+        x = pair[1]
+        x_prob = img_probs[i][1]
+        x_label = img_labels[i][1]
+        noise = abs((x_prime - x)) / rc
+        ax[i][0].imshow(x)
+        ax[i][0].set_xlabel(f"{x_label}:{x_prob}%", fontsize =6)
+        ax[i][1].imshow(noise)
+        ax[i][1].set_xlabel(f"Unthrottled (a = .125)", fontsize =6)
+        ax[i][2].imshow(x_prime)
+        ax[i][2].set_xlabel(f"{x_prime_label}:{x_prime_prob}", fontsize =6)
+        fig.savefig("plots/adversarials.png")
+    
+    return fig
+
+
+def problem4_1(paths):
+    img_pairs = []
+    img_probs = []
+    img_labels = []
+    for path in paths:
+        img_pair, img_prob, img_label = adversarial_training(path)
+        img_pair[0] = reverse_transform(img_pair[0])
+        img_pair[1] = reverse_transform(img_pair[1])
+        img_pairs.append(img_pair)
+        img_probs.append(img_prob)
+        img_labels.append(img_label)
+
+    plot_adversarial(tuple(img_pairs), tuple(img_probs), tuple(img_labels))
+    return
+
+# #########################
+
+# mean=[0.485, 0.456, 0.406]
+# std=[0.229, 0.224, 0.225]
+
+# def visualize(x, x_adv, x_grad, epsilon, clean_pred, adv_pred, clean_prob, adv_prob):
+#         x = x.squeeze(0)     #remove batch dimension # B X C H X W ==> C X H X W
+#         x = x.mul(torch.FloatTensor(std).view(3,1,1)).add(torch.FloatTensor(mean).view(3,1,1)).numpy()#reverse of normalization op- "unnormalize"
+#         x = np.transpose( x , (1,2,0))   # C X H X W  ==>   H X W X C
+#         x = np.clip(x, 0, 1)
+        
+#         x_adv = x_adv.squeeze(0)
+#         x_adv = x_adv.mul(torch.FloatTensor(std).view(3,1,1)).add(torch.FloatTensor(mean).view(3,1,1)).numpy()#reverse of normalization op
+#         x_adv = np.transpose( x_adv , (1,2,0))   # C X H X W  ==>   H X W X C
+#         x_adv = np.clip(x_adv, 0, 1)
+        
+#         x_grad = x_grad.squeeze(0).numpy()
+#         x_grad = np.transpose(x_grad, (1,2,0))
+#         x_grad = np.clip(x_grad, 0, 1)
+        
+#         figure, ax = plt.subplots(1,3, figsize=(18,8))
+#         ax[0].imshow(x)
+#         ax[0].set_title('Clean Example', fontsize=20)
+        
+        
+#         ax[1].imshow(x_grad)
+#         ax[1].set_title('Perturbation', fontsize=20)
+#         # ax[1].set_yticklabels([])
+#         # ax[1].set_xticklabels([]) # needed?
+#         ax[1].set_xticks([])
+#         ax[1].set_yticks([])
+
+        
+#         ax[2].imshow(x_adv)
+#         ax[2].set_title('Adversarial Example', fontsize=20)
+        
+#         ax[0].axis('off')
+#         ax[2].axis('off')
+
+#         ax[0].text(1.1,0.5, "+{}*".format(round(epsilon,3)), size=15, ha="center", 
+#                 transform=ax[0].transAxes)
+        
+#         ax[0].text(0.5,-0.13, "Prediction: {}\n Probability: {}".format(clean_pred, clean_prob), size=15, ha="center", 
+#             transform=ax[0].transAxes)
+        
+#         ax[1].text(1.1,0.5, " = ", size=15, ha="center", transform=ax[1].transAxes)
+
+#         ax[2].text(0.5,-0.13, "Prediction: {}\n Probability: {}".format(adv_pred, adv_prob), size=15, ha="center", 
+#             transform=ax[2].transAxes)
+#         figure.savefig('trial.png')
+#         # plt.figsave('trial')        
+#         plt.show()
+
+#####4.2
+
+
 
 
 ##########
